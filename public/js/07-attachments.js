@@ -28,7 +28,13 @@ function addFiles(list) {
     if (f.size > MAX_FILE) { toast(`«${f.name}» больше 20 МБ`); continue; }
     const item = { id: uid(), name: f.name, size: f.size, loading: true, kind: f.type.startsWith('image/') ? 'img' : 'file' };
     PEND.push(item);
-    (item.kind === 'img' ? readImage(f).then((u) => (item.url = u)) : readText(f).then((t) => { item.text = t.length > MAX_TEXT ? t.slice(0, MAX_TEXT) + '\n…[обрезано]' : t; }))
+    (item.kind === 'img' ? readImage(f).then((u) => (item.url = u)) : readText(f).then((t) => {
+      if (t.images) { // PDF без текста: страницы идут картинками сразу после файла
+        if (PEND.includes(item)) PEND.splice(PEND.indexOf(item) + 1, 0, ...t.images.map((url) => ({ id: uid(), kind: 'img', url })));
+        toast(`«${f.name}»: ${t.text}`); t = t.text;
+      }
+      item.text = t.length > MAX_TEXT ? t.slice(0, MAX_TEXT) + '\n…[обрезано]' : t;
+    }))
       .catch((e) => { PEND = PEND.filter((x) => x !== item); toast(`«${f.name}»: ${e.message}`); })
       .finally(() => { item.loading = false; renderAtts(); renderSend(); });
   }
@@ -68,8 +74,24 @@ async function readPdf(f) {
     if (out.join('').length > MAX_TEXT) break;
   }
   const t = out.join('\n\n').trim();
-  if (!t) throw new Error('в PDF нет текста (возможно, это скан)');
-  return t;
+  if (t) return t;
+  // скан или презентация из картинок — отдаём страницы изображениями (их читают модели со зрением)
+  const images = await pdfPages(doc).catch(() => []);
+  if (!images.length) throw new Error('в PDF нет текста (возможно, это скан)');
+  return { images, text: `в PDF нет текста — страницы приложены картинками: ${images.length} из ${doc.numPages}` };
+}
+const PDF_IMG_PAGES = 15; // больше — тяжело для памяти браузера и синхронизации чатов (15 МБ)
+async function pdfPages(doc) {
+  const urls = [];
+  for (let i = 1; i <= Math.min(doc.numPages, PDF_IMG_PAGES); i++) {
+    const page = await doc.getPage(i), v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: 1280 / Math.max(v1.width, v1.height) });
+    const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    urls.push(c.toDataURL('image/jpeg', 0.8)); page.cleanup();
+  }
+  return urls;
 }
 // --- DOCX / XLSX / PPTX: мини-распаковщик zip без библиотек ---
 async function unzip(buf) {

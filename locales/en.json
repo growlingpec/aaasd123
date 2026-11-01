@@ -573,6 +573,7 @@
   "браузер не дал доступ — пользователю нужно снова разрешить папку": "the browser denied access — the user needs to allow the folder again",
   "в": "in",
   "в PDF нет текста (возможно, это скан)": "the PDF contains no text (it may be a scan)",
+  "в PDF нет текста — страницы приложены картинками": "the PDF contains no text — pages attached as images",
   "в день": "per day",
   "в день). Лимит обновится в полночь по Москве — или улучшите тариф прямо сейчас.": "per day). The limit resets at midnight Moscow time — or upgrade your plan now.",
   "в папке:": "in folder:",
