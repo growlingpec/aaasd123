@@ -1,7 +1,7 @@
 'use strict';
 // Облачный компьютер в режиме CLOUD_RUNNER=local (без Docker): терминал и файлы через API, тарифы, границы папки,
 // место на диске и инструменты computer_* в чате. Docker-режим проверяет scripts/cloud-check.sh.
-const test = require('node:test'), assert = require('node:assert/strict'), http = require('http'), fs = require('fs'), path = require('path');
+const test = require('node:test'), assert = require('node:assert/strict'), http = require('http'), net = require('net'), fs = require('fs'), path = require('path');
 const { copyApp, seed, startServer, rm } = require('./helpers');
 
 test('облачный компьютер: API, тарифы, границы папки и инструменты модели', async (t) => {
@@ -22,7 +22,9 @@ test('облачный компьютер: API, тарифы, границы п�
   });
   fs.writeFileSync(dir + '/data/models.json', JSON.stringify([{ id: 'm1', name: 'Mock', modelId: 'mock', baseUrl: `http://127.0.0.1:${mock.address().port}`, apiKey: 'not-a-real-secret' }]));
   fs.writeFileSync(dir + '/data/settings.json', JSON.stringify({ browser: false, selfcheck: false, code: false }));
-  const s = await startServer(dir, { CLOUD_RUNNER: 'local', MODEL_REQUEST_TIMEOUT_MS: '5000' });
+  // превью сайтов — на «другом» адресе того же сервера: localhost вместо 127.0.0.1 (своя cookie, другой origin)
+  const s = await startServer(dir, (port) => ({ CLOUD_RUNNER: 'local', MODEL_REQUEST_TIMEOUT_MS: '5000', CLOUD_PREVIEW_URL: 'http://localhost:' + port }));
+  const pv = s.base.replace('127.0.0.1', 'localhost');
   t.after(async () => { await s.stop(); await new Promise((r) => mock.close(r)); rm(dir); });
   const home = path.join(dir, 'data', 'cloud', 'u1');
   const run = (command, cwd) => s.req('POST', '/api/cloud/run', { token: 'tok1', body: { command, cwd } });
@@ -119,6 +121,85 @@ test('облачный компьютер: API, тарифы, границы п�
       assert.equal(r.status, 200, r.text);
       assert.ok(!(requests[0].tools || []).some((x) => x.function.name.startsWith('computer_')), token);
     }
+  });
+
+  await t.test('сайты: превью на отдельном адресе, только у владельца, с WebSocket', async () => {
+    const app = http.createServer((req, res) => {
+      if (req.url === '/go') { res.writeHead(302, { Location: `http://localhost:${app.address().port}/target` }); return res.end(); }
+      let body = ''; req.on('data', (d) => (body += d));
+      req.on('end', () => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ method: req.method, url: req.url, host: req.headers.host, cookie: req.headers.cookie || '', fwd: req.headers['x-forwarded-host'], body })); });
+    }).on('upgrade', (req, sock) => { sock.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n'); sock.on('data', (d) => sock.write('echo:' + d)); });
+    await new Promise((r) => app.listen(0, '0.0.0.0', r));
+    const lo = http.createServer((q, r) => r.end('lo')); await new Promise((r) => lo.listen(0, '127.0.0.1', r));
+    t.after(() => { app.close(); lo.close(); });
+    const port = app.address().port, get = (u, h = {}) => fetch(u, { redirect: 'manual', headers: h });
+
+    const ports = (await s.req('GET', '/api/cloud/ports', { token: 'tok1' })).json;
+    assert.equal(ports.preview, true);
+    assert.deepEqual(ports.ports.find((p) => p.port === port), { port });
+    assert.deepEqual(ports.ports.find((p) => p.port === lo.address().port), { port: lo.address().port });
+    assert.equal((await s.req('GET', '/api/cloud/open?port=' + port)).status, 401);
+    assert.equal((await s.req('GET', '/api/cloud/open?port=' + port, { token: 'tok2' })).status, 403);
+    assert.equal((await s.req('GET', '/api/cloud/open?port=80', { token: 'tok1' })).status, 400);
+
+    const open = await s.req('GET', '/api/cloud/open?port=' + port, { token: 'tok1' });
+    assert.equal(open.status, 302);
+    const link = open.headers.get('location'); assert.match(link, new RegExp('^' + pv + '/__premier/open\\?t=[a-f0-9]{48}$'));
+    assert.equal((await get(pv + '/')).status, 401); // без входа — ничего
+    const login = await get(link); assert.equal(login.status, 302); assert.equal(login.headers.get('location'), '/');
+    const ck = login.headers.get('set-cookie'); assert.match(ck, /^premier_pc=[a-f0-9]+\.[a-f0-9]+; Path=\/; HttpOnly; SameSite=Lax/);
+    assert.equal((await get(link)).status, 403); // ссылка одноразовая
+    const cookie = ck.split(';')[0] + '; theme=dark';
+
+    let r = await get(pv + '/chat?x=1', { Cookie: cookie }); // любые пути — к сайту, а не к Premier
+    assert.equal(r.status, 200);
+    assert.deepEqual(await r.json(), { method: 'GET', url: '/chat?x=1', host: 'localhost:' + port, cookie: 'theme=dark', fwd: new URL(pv).host, body: '' });
+    r = await fetch(pv + '/api/form', { method: 'POST', headers: { Cookie: cookie }, body: 'a=1' });
+    assert.equal((await r.json()).body, 'a=1');
+    r = await get(pv + '/go', { Cookie: cookie }); assert.equal(r.status, 302); assert.equal(r.headers.get('location'), '/target');
+    assert.equal((await get(pv + '/', { Cookie: cookie.replace(/\.[a-f0-9]+/, '.00') })).status, 401);
+    assert.equal((await get(pv + '/', { Cookie: 'premier_session=tok1' })).status, 401); // cookie Premier там не действует
+
+    // API Premier не принимает запросы со страниц превью
+    r = await fetch(s.base + '/api/memory', { method: 'POST', headers: { Cookie: 'premier_session=tok1', Origin: pv, 'Content-Type': 'application/json' }, body: '{"text":"x"}' });
+    assert.equal(r.status, 403);
+    r = await fetch(s.base + '/api/memory', { method: 'POST', headers: { Cookie: 'premier_session=tok1', Origin: s.base, 'Content-Type': 'application/json' }, body: '{"on":false}' });
+    assert.equal(r.status, 200);
+
+    const echo = await new Promise((ok, fail) => {
+      const sock = net.connect(+new URL(pv).port, '127.0.0.1', () => sock.write(`GET /ws HTTP/1.1\r\nHost: ${new URL(pv).host}\r\nCookie: ${cookie}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n`));
+      let got = ''; sock.on('data', (d) => { got += d; if (got.includes('\r\n\r\n') && !got.includes('echo:')) sock.write('ping'); if (got.includes('echo:ping')) { sock.destroy(); ok(got); } });
+      sock.on('error', fail); setTimeout(() => fail(new Error('нет ответа: ' + got)), 5000);
+    });
+    assert.match(echo, /^HTTP\/1\.1 101 /);
+
+    const dead = await s.req('GET', '/api/cloud/open?port=1', { token: 'tok1' });
+    assert.equal(dead.status, 400);
+    const free = await new Promise((ok) => { const x = net.createServer().listen(0, () => { const p = x.address().port; x.close(() => ok(p)); }); });
+    const l2 = (await s.req('GET', '/api/cloud/open?port=' + free, { token: 'tok1' })).headers.get('location');
+    const c2 = (await get(l2)).headers.get('set-cookie').split(';')[0];
+    r = await get(pv + '/', { Cookie: c2 }); assert.equal(r.status, 502); assert.match(await r.text(), /На порту \d+ ничего не отвечает/);
+  });
+
+  await t.test('терминал: интерактивный bash через WebSocket', async () => {
+    const ws = (headers) => new WebSocket(s.base.replace('http', 'ws') + '/api/cloud/tty?cols=90&rows=20', { headers });
+    const refused = (sock) => new Promise((ok) => { sock.onopen = () => ok(false); sock.onerror = () => ok(true); });
+    assert.equal(await refused(ws({ Cookie: 'premier_session=tok1', Origin: 'http://evil.example' })), true);
+    assert.equal(await refused(ws({ Cookie: 'premier_session=tok2' })), true); // тариф без облака
+    assert.equal(await refused(ws({ Cookie: 'premier_session=tok1', Origin: pv })), true); // и не со страницы превью
+    const c = ws({ Cookie: 'premier_session=tok1', Origin: s.base });
+    c.binaryType = 'arraybuffer';
+    let out = ''; const dec = new TextDecoder();
+    c.onmessage = (e) => { out += typeof e.data === 'string' ? e.data : dec.decode(e.data, { stream: true }); };
+    const until = (re) => new Promise((ok, fail) => { const t0 = Date.now(), iv = setInterval(() => { if (re.test(out)) { clearInterval(iv); ok(); } else if (Date.now() - t0 > 8000) { clearInterval(iv); fail(new Error('нет ' + re + ' в выводе:\n' + out.slice(-500))); } }, 30); });
+    await new Promise((ok, fail) => { c.onopen = ok; c.onerror = fail; });
+    const type = (d) => c.send(JSON.stringify({ d }));
+    type('echo "$((6*7))-ok"; tty; stty size; pwd\r');
+    await until(/42-ok\r?\n\/dev\/pts\/\d+\r?\n20 90\r?\n/);
+    assert.match(out, new RegExp(home.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    c.send(JSON.stringify({ r: [120, 40] })); type('stty size\r'); await until(/40 120/);
+    type('python3 -q\r'); await until(/>>> $/); type('2**10\r'); await until(/1024\r?\n>>> $/); type('exit()\r');
+    const closed = new Promise((ok) => (c.onclose = ok)); type('exit\r'); await closed;
   });
 
   await t.test('место закончилось: запись и команды останавливаются, удаление работает', async () => {

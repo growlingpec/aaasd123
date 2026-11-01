@@ -16,8 +16,11 @@ const tts = require('./tts');
 const folder = require('./folder');
 const agent = require('./agent');
 const cloud = require('./cloud');
+const cloudPreview = require('./cloud-preview');
+const WS = require('./ws');
 const cloudOn = (u) => !!u && cloud.ready() && cloud.quotaMB(bill.planOf(u)) > 0;
 const cloudBusy = new Set();
+cloudPreview.init({ allow: (uid) => cloudOn(store.users.get(uid)) });
 const bill = require('./billing');
 const chatPolicy = require('./chat-policy');
 const chatStream = require('./chat-stream');
@@ -952,10 +955,17 @@ async function handleApi(req, res, url) {
   if (p.startsWith('/api/cloud/')) {
     const u = currentUser(req); if (!u) return json(res, 401, { error: 'Войдите в аккаунт' });
     const plan = bill.planOf(u), quota = cloud.quotaMB(plan);
+    if (p === '/api/cloud/open' && m === 'GET') { // кнопка «Открыть сайт»: одноразовая ссылка на адрес превью
+      const port = Number(url.searchParams.get('port')), fail = (code, text) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.6 system-ui;background:#101014;color:#ccc;padding:32px">${text}</body>`); };
+      if (!cloudPreview.on) return fail(404, 'Открывать сайты из облачного компьютера на этом сервере пока нельзя.');
+      if (!quota || !cloud.ready()) return fail(403, 'Облачный компьютер доступен на платных тарифах.');
+      if (!Number.isInteger(port) || port < 1024 || port > 65535) return fail(400, 'Неверный порт.');
+      res.writeHead(302, { Location: cloudPreview.open(u.id, port), 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' }); return res.end();
+    }
     if (p === '/api/cloud/status' && m === 'GET') return json(res, 200, await cloud.status(u.id, plan));
     const st = await cloud.check(); if (!st.ok) return json(res, 503, { error: st.error });
     // после окончания тарифа файлы остаются доступны: смотреть, скачивать и удалять можно, запускать и загружать — нет
-    if (!quota && !['/api/cloud/files', '/api/cloud/file', '/api/cloud/delete', '/api/cloud/stop'].includes(p)) return json(res, 403, { error: 'Облачный компьютер доступен на платных тарифах', code: 'plan' });
+    if (!quota && !['/api/cloud/files', '/api/cloud/file', '/api/cloud/delete', '/api/cloud/stop', '/api/cloud/ports'].includes(p)) return json(res, 403, { error: 'Облачный компьютер доступен на платных тарифах', code: 'plan' });
     const q = (k) => String(url.searchParams.get(k) || '');
     try {
       if (p === '/api/cloud/run' && m === 'POST') {
@@ -978,6 +988,7 @@ async function handleApi(req, res, url) {
       }
       if (p === '/api/cloud/delete' && m === 'POST') { const b = await readBody(req, 2e4); return json(res, 200, { ok: true, out: await cloud.files(u.id, quota, 'delete', { path: b.path }) }); }
       if (p === '/api/cloud/stop' && m === 'POST') { await cloud.stop(u.id); return json(res, 200, { ok: true }); }
+      if (p === '/api/cloud/ports' && m === 'GET') return json(res, 200, { preview: cloudPreview.on, ports: await cloud.ports(u.id) });
     } catch (e) { return json(res, e.status || 400, { error: e.message }); }
     return json(res, 404, { error: 'Не найдено' });
   }
@@ -1314,7 +1325,7 @@ async function handleApi(req, res, url) {
             } else if (fold && folder.NAMES.has(c.name)) {
               result = await folder.ask(user.id, out, c.name, args, ac.signal);
             } else if (useCloud && cloud.NAMES.has(c.name)) { // облако изолировано — без подтверждений, кроме ответов, где модель читала сайты
-              result = await agent.call(user.id, out, c.name, args, readWeb ? 'web' : 'all', ac.signal, (n, a, sig) => cloud.call(user.id, cloudQuota, n, a, sig));
+              result = await agent.call(user.id, out, c.name, args, readWeb ? 'web' : 'all', ac.signal, (n, a, sig) => cloud.exec(user.id, cloudQuota, n, a, sig));
             } else if (useAgent && agent.NAMES.has(c.name)) {
               result = await agent.call(user.id, out, c.name, args, b.agentAuto ? (readWeb ? 'web' : 'all') : false, ac.signal);
             } else if (c.name === 'generate_video' && useVid) {
@@ -1504,6 +1515,9 @@ function sendMedia(req, res, fp, name, dl) {
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   res.on('finish', () => monitor.request(res.statusCode));
+  // адрес превью сайтов облачного компьютера — только прокси в контейнер, никаких страниц и API Premier
+  if (cloudPreview.match(req)) return cloudPreview.handle(req, res).catch(() => { if (!res.headersSent) res.writeHead(502); res.end(); });
+  if (url.pathname.startsWith('/api/') && req.method !== 'GET' && req.method !== 'HEAD' && cloudPreview.fromPreview(req)) { res.writeHead(403); return res.end(); }
   if (url.pathname === '/healthz') { // для проверки «жив ли сервер» (deploy/healthcheck.sh, внешние мониторы)
     const h = monitor.health({ db: () => store.db.prepare('SELECT 1 AS x').get().x === 1 });
     res.writeHead(h.ok ? 200 : 503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(h));
@@ -1590,7 +1604,23 @@ if (/^\/chat\/?$/.test(url.pathname) || /^\/login\/?$/.test(url.pathname)) {
     if (err) { res.writeHead(404); return res.end('Not found'); }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-cache' }); res.end(data);
   });
-}).listen(PORT, process.env.HOST || undefined, () => console.log(`Premier: http://${process.env.HOST || 'localhost'}:${PORT}`)); // HOST=127.0.0.1 — доступ только через прокси
+}).on('upgrade', onUpgrade).listen(PORT, process.env.HOST || undefined, () => console.log(`Premier: http://${process.env.HOST || 'localhost'}:${PORT}`)); // HOST=127.0.0.1 — доступ только через прокси
+// WebSocket: терминал облачного компьютера и сайты на адресе превью
+async function onUpgrade(req, socket, head) {
+  const no = (code) => socket.end(`HTTP/1.1 ${code}\r\nConnection: close\r\n\r\n`);
+  try {
+    if (cloudPreview.match(req)) return await cloudPreview.upgrade(req, socket, head);
+    const url = new URL(req.url, 'http://x');
+    if (url.pathname !== '/api/cloud/tty') return no('404 Not Found');
+    // браузер всегда присылает Origin: чужой сайт не должен открыть терминал с cookie пользователя
+    const o = req.headers.origin, host = (s) => { try { return new URL(s).host.toLowerCase(); } catch { return '?'; } };
+    if (o && host(o) !== String(req.headers.host || '').toLowerCase() && host(o) !== host(originOf(req))) return no('403 Forbidden');
+    const u = currentUser(req); if (!u || !cloudOn(u)) return no('403 Forbidden');
+    const ws = WS.accept(req, socket, head); if (!ws) return;
+    try { await cloud.tty(u.id, cloud.quotaMB(bill.planOf(u)), ws, url.searchParams.get('cols'), url.searchParams.get('rows')); }
+    catch (e) { ws.send('\r\n' + e.message + '\r\n'); ws.close(); }
+  } catch { socket.destroy(); }
+}
 // корректное завершение (браузер закрывается вместе с сервером)
 let stopping = false;
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, async () => {

@@ -147,6 +147,7 @@ body{font:15.5px/1.65 var(--p-font)}
 .clerr{color:var(--p-bad)}
 .clin code{font:12.5px var(--p-font-mono)}
 .clin input{font:14px var(--p-font-mono)}
+.clxt{background:var(--p-bg)}
 .agdl{color:var(--p-text)!important}
 .agcode{font:600 var(--p-font-mono);background:color-mix(in srgb,var(--p-accent) 12%,transparent)}
 .agcmd{background:color-mix(in srgb,var(--p-scrim-c) 30%,transparent)}

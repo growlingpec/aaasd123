@@ -3,8 +3,8 @@
    пользователь жмёт «Разрешить» — и только тогда помощник его выполняет. Чтение и просмотр — без подтверждения. */
 const AG = { on: true, conn: false, info: {}, auto: false, timer: 0, mode: 'pc' }; // mode: 'pc' — ПК через помощник, 'cloud' — облачный компьютер (cloud.js)
 try { AG.on = localStorage.getItem('premier:agon') !== '0'; AG.auto = localStorage.getItem('premier:agauto') === '1'; AG.mode = localStorage.getItem('premier:agmode') === 'cloud' ? 'cloud' : 'pc'; } catch {}
-const AG_LBL = { computer_run: 'Command', computer_list: 'Browsed folder', computer_read: 'Read file', computer_write: 'Write file', computer_edit: 'Edit file', computer_mkdir: 'New folder', computer_move: 'Move', computer_delete: 'Delete', computer_open: 'Open' };
-const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext' };
+const AG_LBL = { computer_run: 'Command', computer_list: 'Browsed folder', computer_read: 'Read file', computer_write: 'Write file', computer_edit: 'Edit file', computer_mkdir: 'New folder', computer_move: 'Move', computer_delete: 'Delete', computer_open: 'Open', computer_preview: 'Website' };
+const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext', computer_preview: 'globe' };
 const agUsable = () => AG.on && AG.mode !== 'cloud' && AG.conn;
 const agSave = () => { try { localStorage.setItem('premier:agon', AG.on ? '1' : '0'); localStorage.setItem('premier:agauto', AG.auto ? '1' : '0'); localStorage.setItem('premier:agmode', AG.mode); } catch {} };
 
@@ -93,7 +93,7 @@ function agHandle(o, msg) {
 }
 function agResult(o, msg) {
   const op = (msg.agops || []).find((x) => x.id === o.cid); if (!op) return;
-  op.state = o.state; if (o.out != null) op.out = String(o.out); renderChat(); if (o.state !== 'run') toBottom();
+  op.state = o.state; if (o.out != null) op.out = String(o.out); if (o.port) op.port = +o.port; renderChat(); if (o.state !== 'run') toBottom();
 }
 function agSummary(m) {
   const ch = (m.agops || []).filter((o) => o.write); if (!ch.length) return '';
@@ -104,9 +104,11 @@ function agHtml(m) {
   if (!m.agops?.length) return '';
   return `<div class="fsops">${m.agops.map((o0) => {
     const o = (o0.state === 'ask' || o0.state === 'run') && !m.live ? { ...o0, state: o0.state === 'ask' ? 'no' : 'err', out: o0.out || 'interrupted' } : o0;
+    if (o.name === 'computer_preview' && o.state === 'ok' && o.port) // сайт из облачного компьютера — кнопка на адрес превью
+      return `<div class="step clsite"><svg><use href="#i-globe"/></svg><span>Site on port ${+o.port}</span><a class="btn pri" href="/api/cloud/open?port=${+o.port}" target="_blank" rel="noopener">Open site</a></div>`;
     if (!o.write) { // просмотр/чтение — компактная строка
       const on = o.state === 'run' || o.state === 'ask';
-      return `<div class="step${on ? ' on' : ''}${o.state === 'err' ? ' bad' : ''}"><svg><use href="#i-${o.state === 'err' ? 'warn' : AG_IC[o.name]}"/></svg><span>${esc(o.state === 'err' ? 'Failed: ' + (o.out || '').replace(/^Ошибка:\s*/, '') : (on ? (o.name === 'computer_list' ? 'Browsing folder ' : 'Reading ') : AG_LBL[o.name] + ' ') + (o.args.path || ''))}</span></div>`;
+      return `<div class="step${on ? ' on' : ''}${o.state === 'err' ? ' bad' : ''}"><svg><use href="#i-${o.state === 'err' ? 'warn' : AG_IC[o.name]}"/></svg><span>${esc(o.state === 'err' ? 'Failed: ' + (o.out || '').replace(/^Ошибка:\s*/, '') : (on ? (o.name === 'computer_list' ? 'Browsing folder ' : o.name === 'computer_preview' ? 'Checking the site on port ' : 'Reading ') : AG_LBL[o.name] + ' ') + (o.args.path || o.args.port || ''))}</span></div>`;
     }
     const st = { ask: 'Awaiting permission', run: 'Running…', ok: 'Completed', no: 'Denied', err: 'Error' }[o.state];
     const c = o.args.content ?? (o.name === 'computer_edit' ? null : undefined);

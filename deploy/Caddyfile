@@ -20,3 +20,15 @@ example.ru {
 www.example.ru {
 	redir https://example.ru{uri} permanent
 }
+
+# Облачный компьютер: отдельный адрес для сайтов, запущенных у пользователей (в premier.env —
+# CLOUD_PREVIEW_URL=https://pc.example.ru). Нужна DNS-запись A для pc.example.ru на этот сервер.
+# Отдельный адрес обязателен: код этих сайтов не должен работать на домене Premier. Раскомментируйте:
+#pc.example.ru {
+#	reverse_proxy 127.0.0.1:3000 {
+#		flush_interval -1
+#	}
+#	request_body {
+#		max_size 45MB
+#	}
+#}

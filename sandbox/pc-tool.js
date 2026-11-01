@@ -80,6 +80,18 @@ const ops = {
     const s = fs.lstatSync(f, { throwIfNoEntry: false }); if (!s) fail('не найден: ' + show(f));
     fs.rmSync(f, { recursive: true, force: true }); return `Готово: ${s.isDirectory() ? 'удалена папка' : 'удалён файл'} ${show(f)}`;
   },
+  // открытые порты (для превью сайтов)
+  ports() {
+    const seen = new Set();
+    for (const f of ['/proc/net/tcp', '/proc/net/tcp6']) {
+      let rows = []; try { rows = fs.readFileSync(f, 'utf8').trim().split('\n').slice(1); } catch {}
+      for (const row of rows) {
+        const [, local, , st] = row.trim().split(/\s+/); if (st !== '0A') continue; // 0A — LISTEN
+        seen.add(parseInt(local.split(':')[1], 16));
+      }
+    }
+    return [...seen].filter((p) => p >= 1024).sort((a, b) => a - b).map((port) => ({ port }));
+  },
   // для файлового менеджера в чате
   ls({ path: p }) { const d = resolve(p); if (!need(d, 'папка').isDirectory()) fail('это не папка: ' + show(d)); return { path: show(d), entries: entries(d).slice(0, 1000) }; },
   get({ path: p }) {

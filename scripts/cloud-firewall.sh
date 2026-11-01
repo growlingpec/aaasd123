@@ -3,6 +3,8 @@
 # сети (метаданные облака 169.254.169.254, соседние машины). В интернет — можно.
 # Запуск от root после установки, и после каждой перезагрузки — или сохранить правила:
 #   apt install iptables-persistent && netfilter-persistent save
+# Только для обычного (rootful) Docker. В rootless Docker контейнеры и так не видят localhost сервера
+# (slirp4netns), а внутреннюю сеть закрывают правилом для пользователя Docker или CLOUD_NETWORK=none.
 set -euo pipefail
 NET="${CLOUD_NETWORK:-premier-cloud}"
 if [ "$NET" = none ]; then echo "CLOUD_NETWORK=none — у контейнеров нет сети, правила не нужны"; exit 0; fi

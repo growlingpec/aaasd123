@@ -27,7 +27,7 @@ const TOOLS = [
   { type: 'function', function: { name: 'computer_open', description: 'Открыть файл, папку или ссылку в программе по умолчанию (например, показать результат или открыть игру/сайт). Пользователь подтверждает.', parameters: P({ target: { type: 'string', description: 'Путь или URL' } }, ['target']) } },
 ];
 const NAMES = new Set(TOOLS.map((t) => t.function.name));
-const READONLY = new Set(['computer_list', 'computer_read']);
+const READONLY = new Set(['computer_list', 'computer_read', 'computer_preview']);
 
 const note = (i) => `\n\nДОСТУП К КОМПЬЮТЕРУ. Пользователь запустил программу-помощник, и ты можешь работать с его компьютером через инструменты computer_*: выполнять команды в терминале, читать и писать файлы в любом месте, создавать папки, запускать программы и открывать ссылки.
 Система: ${i.os || '?'} (${i.host || '?'}). Домашняя папка: ${i.home || '?'}. Рабочий стол: ${i.desktop || '?'}. Node: ${i.node || '—'}.
@@ -97,7 +97,10 @@ async function call(uid, out, name, args, auto, signal, run) {
     if (!ok) { out({ agres: { cid, state: 'no' } }); return `Пользователь ОТКЛОНИЛ действие (${name}) — оно не выполнено. Не повторяй его; спроси, что сделать иначе.`; }
   }
   out({ agres: { cid, state: 'run' } });
-  try { const r = await (run ? run(name, args, signal) : dispatch(uid, name, args, signal)); out({ agres: { cid, state: /^Ошибка/.test(r) ? 'err' : 'ok', out: r.slice(0, 2000) } }); return r; }
+  try {
+    const x = await (run ? run(name, args, signal) : dispatch(uid, name, args, signal)), r = typeof x === 'string' ? x : x.text; // run может вернуть { text, ui } — ui уходит в карточку
+    out({ agres: { cid, state: /^Ошибка/.test(r) ? 'err' : 'ok', out: r.slice(0, 2000), ...(typeof x === 'object' && x.ui) } }); return r;
+  }
   catch (e) { out({ agres: { cid, state: 'err', out: e.message } }); return 'Ошибка: ' + e.message; }
 }
 

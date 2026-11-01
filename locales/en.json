@@ -897,5 +897,16 @@
   "Мои файлы в облаке": "My cloud files",
   "Тариф закончился: файлы можно скачать или удалить, а запускать команды — после продления.": "Your plan has ended: you can download or delete files, and run commands again after renewing.",
   "Только файлы": "Files only",
-  "занято": "used"
+  "занято": "used",
+  "Обновить": "Refresh",
+  "Проверяю…": "Checking…",
+  "Порт": "Port",
+  "Открыть сайт": "Open site",
+  "Серверы, запущенные в облачном компьютере. Сайт видите только вы.": "Servers running in the cloud computer. Only you can see these sites.",
+  "не удалось загрузить терминал": "could not load the terminal",
+  "терминал закрыт — нажмите Enter, чтобы открыть снова": "terminal closed — press Enter to reopen",
+  "Запущенных серверов нет. Запустите сервер — например,": "No servers are running. Start a server — for example,",
+  "— или попросите модель сделать сайт.": "— or ask the model to build a site.",
+  "Сайт на порту": "Site on port",
+  "Проверяю сайт на порту": "Checking the site on port"
 }

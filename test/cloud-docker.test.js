@@ -8,7 +8,9 @@ test('облачный компьютер в Docker: изоляция, лими�
   const dir = copyApp();
   seed(dir, { users: [{ id: 'd1', login: 'anna', email: 'anna@example.com', plan: 'pro', until: Date.now() + 1e10 }, { id: 'd2', login: 'boris', email: 'boris@example.com', plan: 'max', until: Date.now() + 1e10 }], sessions: { tok1: 'd1', tok2: 'd2' } });
   const pass = Object.fromEntries(Object.entries(process.env).filter(([k]) => /^(DOCKER_|CLOUD_IMAGE$|CLOUD_NETWORK$)/.test(k))); // нестандартный адрес Docker (DOCKER_HOST)
-  const s = await startServer(dir, { CLOUD_RUNNER: 'docker', ...pass });
+  const s = await startServer(dir, (port) => ({ CLOUD_RUNNER: 'docker', CLOUD_PREVIEW_URL: 'http://localhost:' + port, ...pass }));
+  const pv = s.base.replace('127.0.0.1', 'localhost');
+  process.env.CLOUD_PREVIEW_URL = pv; // для cloud.js, который тест загружает к себе (computer_preview)
   const drop = () => { try { execFileSync('docker', ['rm', '-f', 'premier-pc-d1', 'premier-pc-d2'], { stdio: 'ignore' }); } catch {} };
   t.after(async () => { await s.stop(); drop(); rm(dir); });
   const run = (command, token = 'tok1', cwd) => s.req('POST', '/api/cloud/run', { token, body: { command, cwd } });
@@ -60,6 +62,44 @@ test('облачный компьютер в Docker: изоляция, лими�
     const r = await cloud.run('d1', 'sleep 60 & sleep 60', { sec: 3 });
     assert.equal(r.killed, true); assert.ok(Date.now() - t0 < 20000);
     const ps = await run('ps -eo args | grep -c "^sleep 60" || true'); assert.equal(ps.json.out, '0');
+  });
+
+  await t.test('терминал: bash в псевдотерминале внутри контейнера, не root', async () => {
+    const c = new WebSocket(s.base.replace('http', 'ws') + '/api/cloud/tty?cols=100&rows=25', { headers: { Cookie: 'premier_session=tok1', Origin: s.base } });
+    c.binaryType = 'arraybuffer'; let out = ''; const dec = new TextDecoder();
+    c.onmessage = (e) => { out += typeof e.data === 'string' ? e.data : dec.decode(e.data, { stream: true }); };
+    const until = (re) => new Promise((ok, fail) => { const t0 = Date.now(), iv = setInterval(() => { if (re.test(out)) { clearInterval(iv); ok(); } else if (Date.now() - t0 > 15000) { clearInterval(iv); fail(new Error('нет ' + re + ':\n' + out.slice(-500))); } }, 50); });
+    await new Promise((ok, fail) => { c.onopen = ok; c.onerror = fail; });
+    c.send(JSON.stringify({ d: 'echo "u=$(id -u) $(tty) $(stty size) $PWD"\r' }));
+    await until(/u=(\d+) \/dev\/pts\/\d+ 25 100 \/home\/premier/);
+    assert.notEqual(/u=(\d+) \/dev/.exec(out)[1], '0');
+    const closed = new Promise((ok) => (c.onclose = ok)); c.send(JSON.stringify({ d: 'exit\r' })); await closed;
+    const ps = await run('ps -eo args | grep -c "^bash -l" || true'); assert.equal(ps.json.out, '0'); // bash терминала завершился
+  });
+
+  await t.test('сайты: сервер в контейнере открывается через адрес превью', async () => {
+    const cloud = require(path.join(dir, 'cloud.js'));
+    await cloud.call('d1', 1024, 'computer_mkdir', { path: '~/site' });
+    await cloud.call('d1', 1024, 'computer_write', { path: '~/site/index.html', content: '<h1>Сайт из облака</h1>' });
+    await cloud.call('d1', 1024, 'computer_run', { command: 'python3 -m http.server 8000 --bind 0.0.0.0', cwd: '~/site', background: true });
+    await cloud.call('d1', 1024, 'computer_run', { command: 'python3 -m http.server 8001 --bind 127.0.0.1', cwd: '~/site', background: true });
+    assert.deepEqual((await s.req('GET', '/api/cloud/ports', { token: 'tok1' })).json.ports, [{ port: 8000 }, { port: 8001 }]);
+    assert.deepEqual(await cloud.exec('d1', 1024, 'computer_preview', { port: 8000 }), { text: 'Готово: пользователь видит кнопку «Открыть сайт» (порт 8000). Сайт работает, пока запущен сервер и не уснул компьютер.', ui: { port: 8000 } });
+    assert.match((await cloud.exec('d1', 1024, 'computer_preview', { port: 8002 })).text, /^Ошибка: на порту 8002 ничего не запущено/);
+    const login = async (port) => (await fetch((await s.req('GET', '/api/cloud/open?port=' + port, { token: 'tok1' })).headers.get('location'), { redirect: 'manual' })).headers.get('set-cookie').split(';')[0];
+    const cookie = await login(8000);
+    const page = await fetch(pv + '/index.html', { headers: { Cookie: cookie } });
+    assert.equal(page.status, 200); assert.equal(await page.text(), '<h1>Сайт из облака</h1>');
+    // через ретранслятор открывается и сервер, который слушает только localhost; параллельные запросы не путаются
+    const lo = await login(8001), many = await Promise.all(Array.from({ length: 12 }, (_, i) => fetch(pv + '/index.html?i=' + i, { headers: { Cookie: i % 2 ? lo : cookie } }).then((r) => r.text())));
+    assert.ok(many.every((x) => x === '<h1>Сайт из облака</h1>'));
+    const sum = /\n([a-f0-9]{40}) /.exec(await cloud.call('d1', 1024, 'computer_run', { command: 'head -c 3000000 /dev/urandom > ~/site/big.bin && sha1sum ~/site/big.bin' }))[1];
+    const big = Buffer.from(await (await fetch(pv + '/big.bin', { headers: { Cookie: lo } })).arrayBuffer());
+    assert.equal(big.length, 3000000); assert.equal(require('crypto').createHash('sha1').update(big).digest('hex'), sum);
+    // после выключения сервер остановлен — страница «спит»
+    await s.req('POST', '/api/cloud/stop', { token: 'tok1' }); await cloud.stop('d1'); // у сервера и теста своё состояние
+    const sleep = await fetch(pv + '/', { headers: { Cookie: cookie } });
+    assert.equal(sleep.status, 503); assert.match(await sleep.text(), /Облачный компьютер спит/);
   });
 
   await t.test('модельные инструменты: файлы через pc-tool внутри контейнера', async () => {

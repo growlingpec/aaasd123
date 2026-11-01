@@ -8,4 +8,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* && ln -s /usr/bin/python3 /usr/local/bin/python
 RUN pip install --no-cache-dir --break-system-packages numpy pandas matplotlib requests openpyxl python-docx python-pptx reportlab pillow \
     && python3 -c "import matplotlib.pyplot"
+# uid 1000 в образе Node зовётся node — в терминале пусть будет premier@cloud
+RUN usermod -l premier -d /home/premier node && groupmod -n premier node
 WORKDIR /home/premier
