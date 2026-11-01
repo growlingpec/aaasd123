@@ -40,7 +40,7 @@ const init = (x) => { US = x; };
 function planOf(u) {
   const now = Date.now();
   let p = null;
-  if (u.plan && u.until > now) p = cfg().plans.find((x) => x.id === u.plan) || null;
+  if (u.plan && u.until > now) { const x = cfg().plans.find((y) => y.id === u.plan); p = x ? { ...x, until: u.until } : null; } // until — для плашки публикаций и срока в кабинете
   if (!p) p = cfg().plans.find((x) => x.id === 'free');
   // временное админское продление лимита сообщений (u.msgExt = {limit, until}) — только вверх
   const ext = u && u.msgExt && u.msgExt.until > now && Number(u.msgExt.limit) > 0 ? Math.floor(Number(u.msgExt.limit)) : 0;

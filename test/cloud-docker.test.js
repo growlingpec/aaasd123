@@ -102,6 +102,25 @@ test('облачный компьютер в Docker: изоляция, лими�
     assert.equal(sleep.status, 503); assert.match(await sleep.text(), /Облачный компьютер спит/);
   });
 
+  await t.test('корзина и публикация для файлов, созданных в контейнере', async () => {
+    await run(`mkdir -p ~/pubsite/css && printf '<title>Из контейнера</title><link href="/css/a.css" rel="stylesheet">' > ~/pubsite/index.html && echo "h1{}" > ~/pubsite/css/a.css && echo keep > ~/note.txt`);
+    let r = await s.req('POST', '/api/cloud/delete', { token: 'tok1', body: { path: '~/note.txt' } }); assert.match(r.json.out, /в корзине/);
+    assert.equal((await run('test -e ~/note.txt; echo $?')).json.out, '1');
+    const id = (await s.req('GET', '/api/cloud/trash', { token: 'tok1' })).json.items[0].id;
+    await s.req('POST', '/api/cloud/trash/restore', { token: 'tok1', body: { id } });
+    r = await run('cat ~/note.txt && echo more >> ~/note.txt && tail -1 ~/note.txt'); assert.equal(r.json.out, 'keep\nmore'); // снова доступен контейнеру на запись
+    // восстановление в удалённую папку: папки создаются для пользователя контейнера
+    await run('mkdir -p ~/deep/a && echo x > ~/deep/a/f.txt');
+    await s.req('POST', '/api/cloud/delete', { token: 'tok1', body: { path: '~/deep/a/f.txt' } }); await run('rm -rf ~/deep');
+    await s.req('POST', '/api/cloud/trash/restore', { token: 'tok1', body: { id: (await s.req('GET', '/api/cloud/trash', { token: 'tok1' })).json.items[0].id } });
+    assert.equal((await run('echo y > ~/deep/a/g.txt && ls ~/deep/a | tr "\\n" " "')).json.out, 'f.txt g.txt');
+    r = await s.req('POST', '/api/cloud/sites', { token: 'tok1', body: { path: '/home/premier/pubsite' } }); assert.equal(r.status, 200, r.text);
+    assert.equal(r.json.title, 'Из контейнера'); assert.equal(r.json.files, 2);
+    const page = await s.req('GET', `/s/${r.json.id}/`, { headers: { 'Sec-Fetch-Dest': 'iframe' } });
+    assert.equal(page.status, 200); assert.ok(page.text.includes(`href="/s/${r.json.id}/css/a.css"`), page.text);
+    assert.equal((await s.req('GET', `/s/${r.json.id}/css/a.css`)).text, 'h1{}\n');
+  });
+
   await t.test('модельные инструменты: файлы через pc-tool внутри контейнера', async () => {
     const cloud = require(path.join(dir, 'cloud.js'));
     assert.match(await cloud.call('d1', 1024, 'computer_write', { path: '~/notes/a.md', content: '# Привет' }), /^Готово: ~\/notes\/a\.md создан/);

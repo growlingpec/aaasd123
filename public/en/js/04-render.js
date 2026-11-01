@@ -26,11 +26,33 @@ function renderTop() {
   $('crumb').innerHTML = (p ? esc(p.name) + (c ? ' / ' : '') : '') + (c ? '<b>' + esc(c.title) + '</b>' : '');
   $('ptag').textContent = p && !c ? 'in project “' + p.name + '»' : '';
 }
-const SUGG = [
-  ['i-edit', 'Make a plan', 'Break a task into steps', 'Create a plan for launching a small project'],
-  ['i-globe', 'Create a website', 'With a live preview alongside', 'Create a one-page website for a coffee shop: menu, photos and contacts'],
-  ['i-code', 'Help with code', 'Write or explain', 'Write a JavaScript function that removes duplicates from an array'],
-  ['i-brain', 'Shape an idea', 'Short and clear', 'Help me describe a product idea in two sentences']];
+// готовые сценарии на пустом чате: q — отправить сразу; fill — вставить в поле (дописать детали); file — ещё и выбрать файл;
+// cloud — нужен облачный компьютер (включается сам, на Free — предложение тарифа)
+const SUGG_BOT = { ic: 'i-tg', t: 'Telegram bot', h: 'Code and launch in the cloud computer', cloud: true, fill: 'Build a Telegram reminder bot in Python (aiogram 3): /add 18:30 Buy milk, /list, /del. Run it in the cloud computer and check that it replies. My token from @BotFather: ' };
+const SUGG_CODE = { ic: 'i-code', t: 'Help with code', h: 'Write or explain', q: 'Write a JavaScript function that removes duplicates from an array' };
+function suggList() {
+  const cloud = typeof CL !== 'undefined' && CL.st?.ok;
+  return [
+    { ic: 'i-globe', t: 'Landing page', h: 'A website with live preview in a minute', q: 'Make a landing page for the «Zerno» coffee shop: menu with prices, gallery, reviews and a table booking form' },
+    { ic: 'i-game', t: 'Game', h: 'In the browser, playable right away', q: 'Make a browser Snake game: arrow keys and swipes, score, high score and increasing speed' },
+    cloud ? { ...SUGG_BOT, pro: !clOk() } : SUGG_CODE,
+    { ic: 'i-table', t: 'Excel analysis', h: 'Numbers, trends and a chart', file: true, fill: 'Analyze the spreadsheet: key numbers, trends and anomalies — and build a clear chart' },
+  ];
+}
+function renderSugg() {
+  const c = cur(), empty = !c || !c.msgs.length;
+  $('sugg').innerHTML = empty && MODELS.length ? `<div class="sugg">${suggList().map((x, i) => `<button type="button" data-sg="${i}"><svg><use href="#${x.ic}"/></svg><span><b>${x.t}${x.pro ? ' <em class="sgpro">Pro</em>' : ''}</b><small>${x.h}</small></span></button>`).join('')}</div>` : '';
+}
+function pickSugg(i) {
+  const x = suggList()[i]; if (!x) return;
+  if (x.q) return send(x.q);
+  if (x.cloud) {
+    if (!clOk()) return openPlans('Telegram bots and other programs run in the cloud computer — available on the Pro and Max plans.');
+    AG.mode = 'cloud'; AG.on = true; agSave(); agRender(); toast('The model will work in the cloud computer');
+  }
+  const q = $('q'); q.value = x.fill; grow(); renderSend(); q.focus(); q.setSelectionRange(q.value.length, q.value.length);
+  if (x.file) $('fileIn').click();
+}
 function greet() {
   const h = new Date().getHours(), g = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   const n = ME.id !== 'guest' ? String(ME.name || '').trim().split(/\s+/)[0] : '';
@@ -40,7 +62,7 @@ function renderChat() {
   const c = cur(), col = $('col');
   const empty = !c || !c.msgs.length;
   document.querySelector('.main').classList.toggle('empty', empty);
-  $('sugg').innerHTML = empty && MODELS.length ? `<div class="sugg">${SUGG.map(([ic, t, h, q]) => `<button data-s="${esc(q)}"><svg><use href="#${ic}"/></svg><span><b>${t}</b><small>${h}</small></span></button>`).join('')}</div>` : '';
+  renderSugg();
   if (empty) {
     const p = S.projects.find((x) => x.id === S.proj);
     const sub = !MODELS.length ? 'Models are not connected yet' : (p ? 'New chat in this project' : 'What shall we work on today?');

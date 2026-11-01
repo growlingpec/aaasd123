@@ -17,8 +17,8 @@ test('облачный компьютер: API, тарифы, границы п�
   await new Promise((r) => mock.listen(0, '127.0.0.1', r));
   const dir = copyApp();
   seed(dir, {
-    users: [{ id: 'u1', login: 'anna', email: 'anna@example.com', plan: 'pro', until: Date.now() + 1e10 }, { id: 'u2', login: 'free', email: 'free@example.com' }],
-    sessions: { tok1: 'u1', tok2: 'u2' },
+    users: [{ id: 'u1', login: 'anna', email: 'anna@example.com', plan: 'pro', until: Date.now() + 1e10 }, { id: 'u2', login: 'free', email: 'free@example.com' }, { id: 'u3', login: 'trial', email: 'trial@example.com', plan: 'pro', until: Date.now() + 1e10, trial: true }],
+    sessions: { tok1: 'u1', tok2: 'u2', tok3: 'u3' },
   });
   fs.writeFileSync(dir + '/data/models.json', JSON.stringify([{ id: 'm1', name: 'Mock', modelId: 'mock', baseUrl: `http://127.0.0.1:${mock.address().port}`, apiKey: 'not-a-real-secret' }]));
   fs.writeFileSync(dir + '/data/settings.json', JSON.stringify({ browser: false, selfcheck: false, code: false }));
@@ -202,6 +202,119 @@ test('облачный компьютер: API, тарифы, границы п�
     const closed = new Promise((ok) => (c.onclose = ok)); type('exit\r'); await closed;
   });
 
+  await t.test('корзина: удаление, восстановление, конфликт имён, ссылки, срок хранения', async () => {
+    await s.req('POST', '/api/cloud/trash/delete', { token: 'tok1', body: { all: true } }); // там уже файл из теста «файлы»
+    await run('mkdir -p proj2/sub && echo a > proj2/a.txt && echo b > proj2/sub/b.txt && echo r > rep.txt && ln -sfn /etc etclink');
+    const del = (p, token = 'tok1') => s.req('POST', '/api/cloud/delete', { token, body: { path: p } });
+    const trash = async () => (await s.req('GET', '/api/cloud/trash', { token: 'tok1' })).json;
+    let r = await del('~/proj2'); assert.equal(r.status, 200, r.text); assert.match(r.json.out, /^Готово: ~\/proj2 в корзине/);
+    assert.equal(fs.existsSync(path.join(home, 'proj2')), false);
+    let tr = await trash(); assert.equal(tr.days, 7);
+    assert.deepEqual(tr.items.map((x) => [x.name, x.from, x.dir, x.size > 0]), [['proj2', '~/proj2', true, true]]);
+    assert.equal((await del('~/rep.txt')).status, 200);
+    fs.writeFileSync(path.join(home, 'rep.txt'), 'new');
+    const rep = (await trash()).items.find((x) => x.name === 'rep.txt');
+    r = await s.req('POST', '/api/cloud/trash/restore', { token: 'tok1', body: { id: rep.id } });
+    assert.equal(r.json.path, '~/rep (восстановлено).txt');
+    assert.equal(fs.readFileSync(path.join(home, 'rep (восстановлено).txt'), 'utf8'), 'r\n'); assert.equal(fs.readFileSync(path.join(home, 'rep.txt'), 'utf8'), 'new');
+    r = await s.req('POST', '/api/cloud/trash/restore', { token: 'tok1', body: { id: (await trash()).items[0].id } });
+    assert.equal(r.json.path, '~/proj2'); assert.equal(fs.readFileSync(path.join(home, 'proj2/sub/b.txt'), 'utf8'), 'b\n');
+    // ссылка наружу: удалить сквозь неё нельзя, сама ссылка уходит в корзину, а цель остаётся
+    r = await del('~/etclink/hostname'); assert.equal(r.status, 400); assert.match(r.json.error, /не найден/);
+    assert.equal((await del('~/etclink')).status, 200); assert.ok(fs.existsSync('/etc/hostname'));
+    r = await del('~'); assert.equal(r.status, 400); assert.match(r.json.error, /домашнюю папку/);
+    assert.equal((await del('../u2/x')).status, 400);
+    // срок: запись старше 7 дней исчезает при следующем удалении
+    const old = (await trash()).items.find((x) => x.name === 'etclink'), mp = path.join(dir, 'data', 'cloud-trash', 'u1', old.id, 'meta.json');
+    fs.writeFileSync(mp, JSON.stringify({ ...JSON.parse(fs.readFileSync(mp, 'utf8')), at: Date.now() - 8 * 864e5 }));
+    await run('echo x > tmp1.txt'); await del('~/tmp1.txt');
+    assert.deepEqual((await trash()).items.map((x) => x.name), ['tmp1.txt']);
+    // удаление инструментом модели — тоже в корзину
+    process.env.CLOUD_RUNNER = 'local'; // до require: режим читается при загрузке модуля
+    const cloudMod = require(path.join(dir, 'cloud.js'));
+    assert.match(await cloudMod.call('u1', 1024, 'computer_delete', { path: 'rep (восстановлено).txt' }), /^Готово: ~\/rep \(восстановлено\)\.txt в корзине/);
+    assert.equal((await s.req('POST', '/api/cloud/trash/delete', { token: 'tok1', body: { all: true } })).status, 200);
+    assert.deepEqual((await trash()).items, []);
+    assert.equal((await s.req('GET', '/api/cloud/trash', { token: 'tok2' })).status, 200); // после тарифа корзину видно
+    assert.equal((await s.req('POST', '/api/cloud/trash/restore', { token: 'tok2', body: { id: 'x' } })).status, 403);
+  });
+
+  await t.test('публикация папки: постоянная ссылка, пути от корня, скрытые файлы, SPA, обновление и снятие', async () => {
+    const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+    fs.mkdirSync(path.join(home, 'site2/img'), { recursive: true }); fs.mkdirSync(path.join(home, 'site2/about'), { recursive: true }); fs.mkdirSync(path.join(home, 'site2/node_modules'), { recursive: true });
+    fs.writeFileSync(path.join(home, 'site2/index.html'), '<!doctype html><title>Кофейня</title><link rel="stylesheet" href="/style.css"><a href="/about/">о нас</a><a href="//cdn.example/x.js">cdn</a><h1>v1</h1>');
+    fs.writeFileSync(path.join(home, 'site2/style.css'), 'body{background:url(/img/bg.png)}');
+    fs.writeFileSync(path.join(home, 'site2/img/bg.png'), png);
+    fs.writeFileSync(path.join(home, 'site2/about/index.html'), '<h1>О нас</h1>');
+    fs.writeFileSync(path.join(home, 'site2/.env'), 'TOKEN=secret'); fs.writeFileSync(path.join(home, 'site2/node_modules/x.js'), 'x');
+    fs.symlinkSync('/etc/hostname', path.join(home, 'site2/leak.txt'));
+    const pub = (p, token = 'tok1') => s.req('POST', '/api/cloud/sites', { token, body: { path: p } });
+    let r = await pub('~/site2'); assert.equal(r.status, 200, r.text);
+    const { id } = r.json; assert.match(id, /^[a-f0-9]{10}$/);
+    assert.deepEqual({ ...r.json, bytes: undefined }, { id, path: '/s/' + id, title: 'Кофейня', src: '~/site2', files: 4, bytes: undefined, updated: false, branding: false });
+    r = await s.req('GET', '/s/' + id); assert.equal(r.status, 302); assert.equal(r.headers.get('location'), `/s/${id}/`);
+    r = await s.req('GET', `/s/${id}/`); assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-security-policy'), /^sandbox allow-scripts/); assert.doesNotMatch(r.headers.get('content-security-policy'), /frame-ancestors/);
+    assert.ok(r.text.includes(`href="/s/${id}/style.css"`) && r.text.includes(`href="/s/${id}/about/"`) && r.text.includes('href="//cdn.example/x.js"'));
+    r = await s.req('GET', `/s/${id}/style.css`); assert.equal(r.text, `body{background:url(/s/${id}/img/bg.png)}`); assert.match(r.headers.get('content-type'), /^text\/css/);
+    const img = await fetch(`${s.base}/s/${id}/img/bg.png`); assert.equal(img.headers.get('content-type'), 'image/png'); assert.deepEqual(Buffer.from(await img.arrayBuffer()), png);
+    r = await s.req('GET', `/s/${id}/about`); assert.equal(r.status, 302); assert.equal(r.headers.get('location'), `/s/${id}/about/`);
+    assert.equal((await s.req('GET', `/s/${id}/about/`)).text, '<h1>О нас</h1>');
+    for (const bad of ['.env', 'node_modules/x.js', 'leak.txt', '%2e%2e/' + id + '.json', 'img/../../' + id + '.json']) assert.equal((await s.req('GET', `/s/${id}/${bad}`)).status, 404, bad);
+    assert.match((await s.req('GET', `/s/${id}/menu/today`)).text, /<h1>v1<\/h1>/); // маршрут SPA → index.html
+    assert.equal((await s.req('PUT', `/s/${id}/`)).status, 405);
+    // повторная публикация — та же ссылка, новое содержимое
+    fs.writeFileSync(path.join(home, 'site2/index.html'), '<title>Кофейня</title><h1>v2</h1>');
+    r = await pub('~/site2'); assert.equal(r.json.id, id); assert.equal(r.json.updated, true);
+    assert.match((await s.req('GET', `/s/${id}/`)).text, /v2/);
+    assert.deepEqual((await s.req('GET', '/api/cloud/sites', { token: 'tok1' })).json.sites.map((x) => [x.id, x.title, x.src]), [[id, 'Кофейня', '~/site2']]);
+    // ошибки
+    assert.match((await pub('~/proj2')).json.error, /нет index\.html/);
+    assert.match((await pub('/etc')).json.error, /только папку внутри ~/);
+    assert.equal((await pub('~/../u2')).status, 400);
+    assert.match((await pub('~/site2/index.html')).json.error, /нужна папка/);
+    assert.equal((await pub('~/site2', 'tok2')).status, 403); // без облачного компьютера
+    // пробный период — с плашкой: обёртка Premier, страницы только внутри неё
+    fs.mkdirSync(path.join(dir, 'data/cloud/u3/web'), { recursive: true }); fs.writeFileSync(path.join(dir, 'data/cloud/u3/web/index.html'), '<h1>trial</h1>'); fs.writeFileSync(path.join(dir, 'data/cloud/u3/web/app.js'), 'x');
+    r = await pub('~/web', 'tok3'); assert.equal(r.json.branding, true); const tid = r.json.id;
+    r = await s.req('GET', '/s/' + tid); assert.equal(r.status, 200); assert.ok(r.text.includes(`src="/s/${tid}/"`) && r.text.includes('premier-promo'));
+    r = await s.req('GET', `/s/${tid}/`); assert.equal(r.status, 302); assert.equal(r.headers.get('location'), '/s/' + tid);
+    r = await s.req('GET', `/s/${tid}/`, { headers: { 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Site': 'cross-site' } });
+    assert.equal(r.text, '<h1>trial</h1>'); assert.match(r.headers.get('content-security-policy'), /frame-ancestors 'self'$/);
+    assert.equal((await s.req('GET', `/s/${tid}/app.js`)).status, 200);
+    // снять может только владелец
+    assert.equal((await s.req('DELETE', '/api/cloud/sites/' + tid, { token: 'tok1' })).status, 404);
+    assert.equal((await s.req('DELETE', '/api/cloud/sites/' + tid, { token: 'tok3' })).status, 200);
+    assert.equal((await s.req('GET', `/s/${tid}/`)).status, 404);
+    // сайт из чата (один HTML): вложенные пути — обычный 404, без зависания
+    const single = (await s.req('POST', '/api/publish', { token: 'tok1', body: { html: '<h1>one</h1>' } })).json;
+    assert.equal((await s.req('GET', single.path + '/x.css')).status, 404);
+  });
+
+  await t.test('чат: модель публикует папку после подтверждения пользователя', async () => {
+    handler = (body, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      if (!body.messages.some((m) => m.role === 'tool')) return res.end('data: ' + JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'call_pub', function: { name: 'computer_publish', arguments: JSON.stringify({ path: '~/site2' }) } }] }, finish_reason: 'tool_calls' }] }) + '\n\n');
+      res.end('data: ' + JSON.stringify({ choices: [{ delta: { content: 'Опубликовал.' }, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n');
+    };
+    requests = [];
+    const resp = await fetch(s.base + '/api/chat', { method: 'POST', headers: { Cookie: 'premier_session=tok1', 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'm1', messages: [{ role: 'user', content: 'опубликуй сайт' }], cloud: true }) });
+    const reader = resp.body.getReader(), dec = new TextDecoder(), ev = []; let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 1); if (!line.trim()) continue;
+        const e = JSON.parse(line); ev.push(e);
+        if (e.ag?.ask) assert.equal((await s.req('POST', '/api/chat/agent', { token: 'tok1', body: { cid: e.ag.cid, ok: true } })).status, 200);
+      }
+    }
+    assert.ok(requests[0].tools.some((x) => x.function.name === 'computer_publish')); assert.match(requests[0].messages[0].content, /computer_publish/);
+    const ag = ev.find((e) => e.ag); assert.deepEqual([ag.ag.name, ag.ag.ask, ag.ag.write], ['computer_publish', true, true]);
+    const ok = ev.find((e) => e.agres?.state === 'ok'); assert.match(ok.agres.url, /^\/s\/[a-f0-9]{10}$/);
+    assert.match(requests[1].messages.find((m) => m.role === 'tool').content, new RegExp(`^Готово: сайт обновлён — ${s.base.replace(/[.]/g, '\\.')}/s/[a-f0-9]{10} \\(4 файл\\.`));
+  });
+
   await t.test('место закончилось: запись и команды останавливаются, удаление работает', async () => {
     process.env.CLOUD_RUNNER = 'local';
     const cloud = require(path.join(dir, 'cloud.js')); // тот же код в процессе теста, квота 1 МБ
@@ -209,7 +322,8 @@ test('облачный компьютер: API, тарифы, границы п�
     const w = await cloud.call('u1', 1, 'computer_write', { path: 'x.txt', content: 'x' });
     assert.match(w, /^Ошибка: место в облачном компьютере закончилось \(2 МБ из 1 МБ\)/);
     assert.match(await cloud.call('u1', 1, 'computer_run', { command: 'echo hi' }), /^Ошибка: место/);
-    assert.match(await cloud.call('u1', 1, 'computer_delete', { path: 'big.bin' }), /^Готово: удалён файл ~\/big\.bin/);
+    // корзина лежит вне квоты — удаление освобождает место
+    assert.match(await cloud.call('u1', 1, 'computer_delete', { path: 'big.bin' }), /^Готово: ~\/big\.bin в корзине/);
     assert.match(await cloud.call('u1', 1, 'computer_run', { command: 'echo hi' }), /^Код завершения 0 · .*\nhi$/);
     const bg = await cloud.call('u1', 1, 'computer_run', { command: 'echo start; sleep 30', background: true });
     assert.match(bg, /^Запущено в фоне \(pid \d+\) в ~\. Журнал: ~\/\.premier\/logs\/\S+\.log\nВывод за первые секунды:\nstart$/);

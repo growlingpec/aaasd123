@@ -508,6 +508,9 @@ textarea::placeholder{color:var(--dim)}
 .clempty{padding:14px}.clnote{margin:0;font-size:12.5px}
 .clxt{height:min(52vh,460px);padding:8px;border:1px solid var(--line);border-radius:10px;background:#0e0e0f;overflow:hidden}.clxt .xterm{height:100%}
 .clgo,.clsite .btn{height:30px;padding:0 12px;display:inline-flex;align-items:center;font-size:13px;text-decoration:none}.clsite{display:flex;align-items:center;gap:8px}.clsite .btn{margin-left:auto}.clwarn{font-size:12.5px}
+.clsec{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:4px 0 8px;font-size:14px}.clsec .sp{flex:1}.clsec .btn{height:30px;padding:0 12px;font-size:13px}#clPubList{margin-bottom:16px}
+.clnm small{display:block;font-size:12px;color:var(--dim);overflow:hidden;text-overflow:ellipsis}.clacts{display:flex;gap:6px}.clinl{width:14px;height:14px;vertical-align:-2px}.cltr{font-weight:600;padding:4px 6px}.clhint{font-size:13px;padding-top:6px;padding-bottom:6px}
+.sgpro{font-style:normal;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px;background:var(--accent);color:#fff;margin-left:4px;vertical-align:1px}
 @media (max-width:600px){.clin{flex-wrap:wrap}.clin code{max-width:100%}.clin input{font-size:16px}.agpre.clout{height:44vh}}
 .agol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}.agol a{color:var(--accent-l)}
 .agdl{display:inline-flex;align-items:center;gap:6px;margin:2px 0;text-decoration:none;color:#fff!important}.agdl svg{width:15px;height:15px}
@@ -592,7 +595,7 @@ textarea::placeholder{color:var(--dim)}
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
 <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
 <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
-<symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+<symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol><symbol id="i-game" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="6"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/></symbol><symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
 <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
 <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></symbol>
@@ -707,8 +710,8 @@ textarea::placeholder{color:var(--dim)}
 <div class="toast" id="toast" role="status"></div>
 <!--ME-->
 <script src="/en/folder.js?v=2"></script>
-<script src="/en/agent.js?v=6"></script>
-<script src="/en/cloud.js?v=3"></script>
+<script src="/en/agent.js?v=7"></script>
+<script src="/en/cloud.js?v=4"></script>
 <!-- клиент разбит на модули: общие переменные in 01-core.js, порядок подключения важен -->
 <script src="/en/js/00-artifact-state.js?v=29"></script>
 <script src="/en/js/00-model-assets.js?v=1"></script>
@@ -716,12 +719,12 @@ textarea::placeholder{color:var(--dim)}
 <script src="/en/js/01-core.js?v=27"></script>
 <script src="/en/js/02-markdown.js?v=25"></script>
 <script src="/en/js/03-archives.js?v=28"></script>
-<script src="/en/js/04-render.js?v=40"></script>
+<script src="/en/js/04-render.js?v=41"></script>
 <script src="/en/js/05-chat.js?v=36"></script>
 <script src="/en/js/06-pane.js?v=30"></script>
 <script src="/en/js/07-attachments.js?v=27"></script>
 <script src="/en/js/08-projects.js?v=26"></script>
-<script src="/en/js/09-events.js?v=35"></script>
+<script src="/en/js/09-events.js?v=37"></script>
 <script src="/en/js/10-account.js?v=33"></script>
 <script src="/en/js/11-voice.js?v=25"></script>
 <script src="/en/js/12-picker.js?v=25"></script>

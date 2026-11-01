@@ -3,8 +3,8 @@
    пользователь жмёт «Разрешить» — и только тогда помощник его выполняет. Чтение и просмотр — без подтверждения. */
 const AG = { on: true, conn: false, info: {}, auto: false, timer: 0, mode: 'pc' }; // mode: 'pc' — ПК через помощник, 'cloud' — облачный компьютер (cloud.js)
 try { AG.on = localStorage.getItem('premier:agon') !== '0'; AG.auto = localStorage.getItem('premier:agauto') === '1'; AG.mode = localStorage.getItem('premier:agmode') === 'cloud' ? 'cloud' : 'pc'; } catch {}
-const AG_LBL = { computer_run: 'Команда', computer_list: 'Посмотрел папку', computer_read: 'Прочитал файл', computer_write: 'Запись файла', computer_edit: 'Правка файла', computer_mkdir: 'Новая папка', computer_move: 'Перемещение', computer_delete: 'Удаление', computer_open: 'Открыть', computer_preview: 'Сайт' };
-const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext', computer_preview: 'globe' };
+const AG_LBL = { computer_run: 'Команда', computer_list: 'Посмотрел папку', computer_read: 'Прочитал файл', computer_write: 'Запись файла', computer_edit: 'Правка файла', computer_mkdir: 'Новая папка', computer_move: 'Перемещение', computer_delete: 'Удаление', computer_open: 'Открыть', computer_preview: 'Сайт', computer_publish: 'Публикация' };
+const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext', computer_preview: 'globe', computer_publish: 'share' };
 const agUsable = () => AG.on && AG.mode !== 'cloud' && AG.conn;
 const agSave = () => { try { localStorage.setItem('premier:agon', AG.on ? '1' : '0'); localStorage.setItem('premier:agauto', AG.auto ? '1' : '0'); localStorage.setItem('premier:agmode', AG.mode); } catch {} };
 
@@ -93,7 +93,7 @@ function agHandle(o, msg) {
 }
 function agResult(o, msg) {
   const op = (msg.agops || []).find((x) => x.id === o.cid); if (!op) return;
-  op.state = o.state; if (o.out != null) op.out = String(o.out); if (o.port) op.port = +o.port; renderChat(); if (o.state !== 'run') toBottom();
+  op.state = o.state; if (o.out != null) op.out = String(o.out); if (o.port) op.port = +o.port; if (typeof o.url === 'string' && /^\/s\/[a-f0-9]{10}$/.test(o.url)) op.url = o.url; renderChat(); if (o.state !== 'run') toBottom();
 }
 function agSummary(m) {
   const ch = (m.agops || []).filter((o) => o.write); if (!ch.length) return '';
@@ -106,6 +106,8 @@ function agHtml(m) {
     const o = (o0.state === 'ask' || o0.state === 'run') && !m.live ? { ...o0, state: o0.state === 'ask' ? 'no' : 'err', out: o0.out || 'прервано' } : o0;
     if (o.name === 'computer_preview' && o.state === 'ok' && o.port) // сайт из облачного компьютера — кнопка на адрес превью
       return `<div class="step clsite"><svg><use href="#i-globe"/></svg><span>Сайт на порту ${+o.port}</span><a class="btn pri" href="/api/cloud/open?port=${+o.port}" target="_blank" rel="noopener">Открыть сайт</a></div>`;
+    if (o.name === 'computer_publish' && o.state === 'ok' && o.url) // опубликованная папка — постоянная ссылка
+      return `<div class="step clsite"><svg><use href="#i-share"/></svg><span>Опубликовано: <code>${esc(location.host + o.url)}</code></span><a class="btn pri" href="${esc(o.url)}" target="_blank" rel="noopener">Открыть сайт</a></div>`;
     if (!o.write) { // просмотр/чтение — компактная строка
       const on = o.state === 'run' || o.state === 'ask';
       return `<div class="step${on ? ' on' : ''}${o.state === 'err' ? ' bad' : ''}"><svg><use href="#i-${o.state === 'err' ? 'warn' : AG_IC[o.name]}"/></svg><span>${esc(o.state === 'err' ? 'Не удалось: ' + (o.out || '').replace(/^Ошибка:\s*/, '') : (on ? (o.name === 'computer_list' ? 'Смотрю папку ' : o.name === 'computer_preview' ? 'Проверяю сайт на порту ' : 'Читаю ') : AG_LBL[o.name] + ' ') + (o.args.path || o.args.port || ''))}</span></div>`;

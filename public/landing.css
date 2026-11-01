@@ -182,3 +182,7 @@ footer .brand .mark{background:transparent;border:0}
   #preview::before{height:32px;background-size:auto;background-position:-8px 0}
   .h2{font-size:25px}
 }
+/* облачный компьютер: терминал всегда тёмный, акценты — из темы */
+.newb,.tsite em{background:var(--p-accent);color:var(--p-on-accent);font-family:var(--p-font)}
+.fl svg{color:var(--p-accent)}
+.feat .viz.term{background:#15130f;border-color:rgba(255,255,255,.08)}
