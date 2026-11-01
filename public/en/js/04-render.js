@@ -115,7 +115,7 @@ function buildHistory(list) {
         ...(x.vids?.length ? ['generated videos: ' + x.vids.map((g) => '«' + (g.prompt || '').slice(0, 200) + '»').join(', ')] : []),
         fsSummary(x), agSummary(x)].filter(Boolean);
       if ((x.agops?.length || x.fsops?.length) && !log.some((l) => /компьютер|папк/.test(l))) log.push('no computer or folder actions were performed');
-      else if (!x.agops?.length && !x.fsops?.length && /(удал|созда|переимен|перемест|запуст|выполн)\S*/i.test(x.t || '') && (typeof AG !== 'undefined' && AG.conn)) log.push('computer tools were NOT called in this response, so nothing on the computer changed');
+      else if (!x.agops?.length && !x.fsops?.length && /(удал|созда|переимен|перемест|запуст|выполн)\S*/i.test(x.t || '') && (typeof AG !== 'undefined' && (AG.conn || clUsable()))) log.push('computer tools were NOT called in this response, so nothing on the computer changed');
     }
   }
   return out;

@@ -536,6 +536,18 @@ textarea::placeholder{color:var(--dim)}
 .agset{display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.55}.agl{margin:0}.dim{color:var(--dim)}.agsm{font-size:12.5px;margin-top:6px}
 .agwarn{padding:10px 12px;border-radius:10px;background:rgba(241,154,154,.08);border:1px solid rgba(241,154,154,.3);color:#f3b2b2;margin:0}
 .agtabs{display:flex;gap:4px;padding:3px;border-radius:10px;background:rgba(255,255,255,.04);align-self:flex-start}.agtabs button{padding:6px 12px;border-radius:8px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}.agtabs button.on{background:var(--hover);color:var(--text)}
+.agpick{display:flex!important;flex-direction:column;gap:2px}.agpick small{font-size:12px;color:var(--dim)}.agpick.on{background:var(--hover)}.agpick.on b::after{content:" ✓";color:var(--muted)}
+.clw{display:flex;flex-direction:column;gap:12px}.clbar{display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap}.clbar .sp,.clpath .sp{flex:1}
+.cldot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--dim);vertical-align:1px}.cldot.on{background:#6fd391}
+.agpre.clout{height:min(50vh,440px);max-height:none;border:1px solid var(--line);border-radius:10px}.clcmd{color:var(--text);font-weight:600;margin-top:10px}.clcmd:first-child{margin-top:0}.clerr{color:#f19a9a}
+.clin{display:flex;gap:8px;align-items:center;margin-top:8px}.clin code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);white-space:nowrap;max-width:30%;overflow:hidden;text-overflow:ellipsis}
+.clin input{flex:1;min-width:0;height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:none;color:var(--text);font:14px ui-monospace,SFMono-Regular,Menlo,monospace}
+.clpath{display:flex;align-items:center;gap:8px;margin-bottom:8px}.clcrumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:13.5px;min-width:0}
+.clcrumbs button{border:0;background:none;color:var(--text);font:inherit;padding:4px 6px;border-radius:6px;cursor:pointer}.clcrumbs button:hover{background:var(--hover)}.clup{display:inline-flex;align-items:center;cursor:pointer}
+.cllist{border:1px solid var(--line);border-radius:10px;max-height:min(50vh,440px);overflow:auto}.clrow{display:grid;grid-template-columns:16px minmax(0,1fr) auto 34px;align-items:center;gap:10px;padding:2px 6px 2px 12px;border-bottom:1px solid var(--line);font-size:14px}
+.clrow:last-child{border-bottom:0}.clrow>svg{width:16px;height:16px;color:var(--muted)}.clnm{border:0;background:none;color:var(--text);font:inherit;text-align:left;padding:9px 0;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}.clnm:hover{text-decoration:underline}
+.clempty{padding:14px}.clnote{margin:0;font-size:12.5px}
+@media (max-width:600px){.clin{flex-wrap:wrap}.clin code{max-width:100%}.clin input{font-size:16px}.agpre.clout{height:44vh}}
 .agol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}.agol a{color:var(--accent-l)}
 .agdl{display:inline-flex;align-items:center;gap:6px;margin:2px 0;text-decoration:none;color:#fff!important}.agdl svg{width:15px;height:15px}
 .agcode{font:600 15px ui-monospace,Menlo,monospace;letter-spacing:.12em;padding:2px 8px;border-radius:6px;background:rgba(94,159,232,.12);color:var(--accent-l)}
@@ -606,7 +618,7 @@ textarea::placeholder{color:var(--dim)}
 <script src="/language.js?v=1"></script>
 <script src="/announce.js?v=1" defer></script>
 <style>.mark{background:transparent}</style>
-<link rel="stylesheet" href="/theme/language.gen.css?v=4"><link rel="stylesheet" href="/theme/chat.gen.css?v=4"><link rel="stylesheet" href="/theme/app.css?v=7">
+<link rel="stylesheet" href="/theme/language.gen.css?v=4"><link rel="stylesheet" href="/theme/chat.gen.css?v=5"><link rel="stylesheet" href="/theme/app.css?v=7">
 </head>
 <body>
 <svg style="display:none"><defs>
@@ -735,7 +747,8 @@ textarea::placeholder{color:var(--dim)}
 <div class="toast" id="toast" role="status"></div>
 <!--ME-->
 <script src="/folder.js?v=2"></script>
-<script src="/agent.js?v=4"></script>
+<script src="/agent.js?v=5"></script>
+<script src="/cloud.js?v=2"></script>
 <!-- клиент разбит на модули: общие переменные в 01-core.js, порядок подключения важен -->
 <script src="/js/00-artifact-state.js?v=29"></script>
 <script src="/js/00-model-assets.js?v=1"></script>
@@ -743,8 +756,8 @@ textarea::placeholder{color:var(--dim)}
 <script src="/js/01-core.js?v=30"></script>
 <script src="/js/02-markdown.js?v=25"></script>
 <script src="/js/03-archives.js?v=28"></script>
-<script src="/js/04-render.js?v=39"></script>
-<script src="/js/05-chat.js?v=35"></script>
+<script src="/js/04-render.js?v=40"></script>
+<script src="/js/05-chat.js?v=36"></script>
 <script src="/js/06-pane.js?v=30"></script>
 <script src="/js/07-attachments.js?v=27"></script>
 <script src="/js/08-projects.js?v=26"></script>
@@ -752,7 +765,7 @@ textarea::placeholder{color:var(--dim)}
 <script src="/js/10-account.js?v=38"></script>
 <script src="/js/11-voice.js?v=25"></script>
 <script src="/js/12-picker.js?v=25"></script>
-<script src="/js/13-billing.js?v=31"></script>
+<script src="/js/13-billing.js?v=32"></script>
 <script src="/js/14-start.js?v=31"></script>
 <script>window.addEventListener("DOMContentLoaded", () => { fsInit(); agInit(); });</script>
 </body>

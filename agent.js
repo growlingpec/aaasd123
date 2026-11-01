@@ -86,8 +86,9 @@ function decide(uid, cid, ok) { const a = asks.get(String(cid || '')); if (!a ||
 // чтение и просмотр не требуют подтверждения; изменения — требуют (если пользователь не включил авто-режим)
 // auto: false — спрашивать всегда; 'all' — авто-режим; 'web' — авто-режим, но в этом ответе модель читала интернет:
 // текст со страниц мог содержать подброшенные команды (prompt injection), поэтому изменения снова подтверждаются
-async function call(uid, out, name, args, auto, signal) {
-  if (!connected(uid)) return 'Ошибка: программа-помощник не запущена на компьютере пользователя. Попроси его открыть Premier Agent (кнопка «Компьютер» в чате).';
+// run — свой исполнитель вместо помощника (облачный компьютер, см. cloud.js)
+async function call(uid, out, name, args, auto, signal, run) {
+  if (!run && !connected(uid)) return 'Ошибка: программа-помощник не запущена на компьютере пользователя. Попроси его открыть Premier Agent (кнопка «Компьютер» в чате).';
   const cid = rand(), write = !READONLY.has(name), ask = write && auto !== 'all' && auto !== true;
   out({ ag: { cid, name, args, write, ask, ...(ask && auto === 'web' ? { why: 'web' } : {}) } });
   if (ask) {
@@ -96,7 +97,7 @@ async function call(uid, out, name, args, auto, signal) {
     if (!ok) { out({ agres: { cid, state: 'no' } }); return `Пользователь ОТКЛОНИЛ действие (${name}) — оно не выполнено. Не повторяй его; спроси, что сделать иначе.`; }
   }
   out({ agres: { cid, state: 'run' } });
-  try { const r = await dispatch(uid, name, args, signal); out({ agres: { cid, state: /^Ошибка/.test(r) ? 'err' : 'ok', out: r.slice(0, 2000) } }); return r; }
+  try { const r = await (run ? run(name, args, signal) : dispatch(uid, name, args, signal)); out({ agres: { cid, state: /^Ошибка/.test(r) ? 'err' : 'ok', out: r.slice(0, 2000) } }); return r; }
   catch (e) { out({ agres: { cid, state: 'err', out: e.message } }); return 'Ошибка: ' + e.message; }
 }
 

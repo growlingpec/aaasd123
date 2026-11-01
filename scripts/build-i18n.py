@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 PUBLIC=ROOT/'public'
 PAGES=['index.html','chat.html','login.html','developers.html','privacy.html']
-SCRIPTS=['developers.js','folder.js','agent.js']+[str(p.relative_to(PUBLIC)) for p in sorted((PUBLIC/'js').glob('*.js'))]
+SCRIPTS=['developers.js','folder.js','agent.js','cloud.js']+[str(p.relative_to(PUBLIC)) for p in sorted((PUBLIC/'js').glob('*.js'))]
 CYR=re.compile('[А-Яа-яЁё]')
 CAT=ROOT/'locales/en.json'
 catalog=json.loads(CAT.read_text()) if CAT.exists() else {}

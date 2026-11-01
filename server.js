@@ -15,6 +15,9 @@ const media = require('./media');
 const tts = require('./tts');
 const folder = require('./folder');
 const agent = require('./agent');
+const cloud = require('./cloud');
+const cloudOn = (u) => !!u && cloud.ready() && cloud.quotaMB(bill.planOf(u)) > 0;
+const cloudBusy = new Set();
 const bill = require('./billing');
 const chatPolicy = require('./chat-policy');
 const chatStream = require('./chat-stream');
@@ -134,8 +137,9 @@ function deleteUser(id) {
   assets.removeUser(id);
   store.users.remove(id); // вместе с сессиями, чатами и памятью
   coder.removeUser(id);
+  cloud.removeUser(id);
 }
-bill.init({ loadSettings: () => loadSettings(), saveSettings: (x) => saveSettings(x), imagesOn: () => imager.ready(loadSettings()), videosOn: () => videor.ready(loadSettings()), onPaid: (p) => adminHooks.onPaid(p) });
+bill.init({ loadSettings: () => loadSettings(), saveSettings: (x) => saveSettings(x), imagesOn: () => imager.ready(loadSettings()), videosOn: () => videor.ready(loadSettings()), cloudOn: () => cloud.ready(), onPaid: (p) => adminHooks.onPaid(p) });
 const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/+$/, '');
 // заголовкам X-Forwarded-* верим только от своего прокси (иначе адрес можно подменить); надёжнее всего задать PUBLIC_URL
 const viaProxy = (req) => process.env.TRUST_PROXY === '1' || (process.env.TRUST_PROXY !== '0' && fromProxy(req.socket.remoteAddress || ''));
@@ -257,6 +261,10 @@ setInterval(() => { const now = Date.now(); for (const [gid, g] of liveGens) { i
 // сырое тело (для проверки подписи вебхуков)
 function readRaw(req, limit = 1e6) {
   return new Promise((ok, fail) => { const parts = []; let n = 0; req.on('data', (c) => { n += c.length; if (n > limit) { fail(Object.assign(new Error('Слишком большой запрос'), { status: 413 })); req.destroy(); } else parts.push(c); }); req.on('end', () => ok(Buffer.concat(parts).toString('utf8'))); req.on('error', fail); });
+}
+// двоичное тело как есть (загрузка файлов в облачный компьютер)
+function readBuf(req, limit) {
+  return new Promise((ok, fail) => { const parts = []; let n = 0; req.on('data', (c) => { n += c.length; if (n > limit) { fail(Object.assign(new Error('Файл больше ' + Math.round(limit / 1048576) + ' МБ'), { status: 413 })); req.destroy(); } else parts.push(c); }); req.on('end', () => ok(Buffer.concat(parts))); req.on('error', fail); });
 }
 function readBody(req, limit = 1e6) {
   if (typeof req._adminRaw === 'string') { // панель уже прочитала тело (для журнала действий)
@@ -537,7 +545,7 @@ async function handleApi(req, res, url) {
   if (p === '/api/pay/cispay' && m === 'POST') { const r = await bill.cisCallback(req.headers, await readRaw(req)); return json(res, r.code, { ok: r.code === 200 }); }
   if (p === '/api/pay/robokassa' && m === 'POST') { const r = bill.rbCallback(Object.fromEntries(new URLSearchParams(await readRaw(req)))); res.writeHead(r.code, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(r.body || ''); }
   if (p === '/api/pay/callback' && m === 'POST') { const r = await bill.callback(req.headers, await readBody(req)); return json(res, r.code, { ok: r.code === 200 }); }
-  if (p === '/api/plans' && m === 'GET') return json(res, 200, { plans: bill.publicPlans(), images: imager.ready(loadSettings()), videos: videor.ready(loadSettings()), trialDays: bill.cfg().trialDays, models: loadModels().map((x) => ({ name: x.name, plans: bill.modelPlans(x) })) });
+  if (p === '/api/plans' && m === 'GET') return json(res, 200, { plans: bill.publicPlans(), images: imager.ready(loadSettings()), videos: videor.ready(loadSettings()), cloud: cloud.ready(), trialDays: bill.cfg().trialDays, models: loadModels().map((x) => ({ name: x.name, plans: bill.modelPlans(x) })) });
   if (p.startsWith('/api/billing') || p.startsWith('/api/pay/')) {
     const u = currentUser(req); if (!u) return json(res, 401, { error: 'Войдите в аккаунт' });
     if (p === '/api/billing' && m === 'GET') return json(res, 200, bill.summary(u));
@@ -940,6 +948,39 @@ async function handleApi(req, res, url) {
     return json(res, 200, { ok: true });
   }
 
+  // ---- облачный компьютер: терминал и файлы (модель работает с ним через /api/chat) ----
+  if (p.startsWith('/api/cloud/')) {
+    const u = currentUser(req); if (!u) return json(res, 401, { error: 'Войдите в аккаунт' });
+    const plan = bill.planOf(u), quota = cloud.quotaMB(plan);
+    if (p === '/api/cloud/status' && m === 'GET') return json(res, 200, await cloud.status(u.id, plan));
+    const st = await cloud.check(); if (!st.ok) return json(res, 503, { error: st.error });
+    // после окончания тарифа файлы остаются доступны: смотреть, скачивать и удалять можно, запускать и загружать — нет
+    if (!quota && !['/api/cloud/files', '/api/cloud/file', '/api/cloud/delete', '/api/cloud/stop'].includes(p)) return json(res, 403, { error: 'Облачный компьютер доступен на платных тарифах', code: 'plan' });
+    const q = (k) => String(url.searchParams.get(k) || '');
+    try {
+      if (p === '/api/cloud/run' && m === 'POST') {
+        const b = await readBody(req, 2e4), cmd = String(b.command || '').trim(); if (!cmd) return json(res, 400, { error: 'Пустая команда' });
+        if (cloudBusy.has(u.id)) return json(res, 429, { error: 'Дождитесь окончания предыдущей команды' });
+        const f = await cloud.full(u.id, quota); if (f) return json(res, 507, { error: f + ' — удалите лишние файлы' });
+        cloudBusy.add(u.id); const ac = new AbortController(); res.on('close', () => { if (!res.writableEnded) ac.abort(); });
+        try { await cloud.ensure(u.id, quota); return json(res, 200, await cloud.run(u.id, cmd.slice(0, 10000), { cwd: b.cwd, sec: 120, signal: ac.signal })); } finally { cloudBusy.delete(u.id); }
+      }
+      if (p === '/api/cloud/files' && m === 'GET') return json(res, 200, await cloud.files(u.id, quota, 'ls', { path: q('path') || '~' }));
+      if (p === '/api/cloud/file' && m === 'GET') {
+        const f = await cloud.files(u.id, quota, 'get', { path: q('path') });
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`, 'Content-Length': f.size, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+        return res.end(Buffer.from(f.b64, 'base64'));
+      }
+      if (p === '/api/cloud/upload' && m === 'POST') {
+        const name = path.basename(q('name')).slice(0, 200); if (!name || name === '.' || name === '..') return json(res, 400, { error: 'Нет имени файла' });
+        const buf = await readBuf(req, 20 * 1048576);
+        return json(res, 200, { ok: true, out: await cloud.files(u.id, quota, 'put', { path: (q('dir') || '~').replace(/\/+$/, '') + '/' + name, b64: buf.toString('base64') }) });
+      }
+      if (p === '/api/cloud/delete' && m === 'POST') { const b = await readBody(req, 2e4); return json(res, 200, { ok: true, out: await cloud.files(u.id, quota, 'delete', { path: b.path }) }); }
+      if (p === '/api/cloud/stop' && m === 'POST') { await cloud.stop(u.id); return json(res, 200, { ok: true }); }
+    } catch (e) { return json(res, e.status || 400, { error: e.message }); }
+    return json(res, 404, { error: 'Не найдено' });
+  }
   // ---- программа-помощник (доступ к компьютеру) ----
   if (p.startsWith('/api/agent/')) {
     const bearer = (req.headers.authorization || '').replace(/^Bearer /, '');
@@ -1019,7 +1060,7 @@ async function handleApi(req, res, url) {
     if (base && !task.needsBase && task.mode === null && task.intent !== 'image' && task.intent !== 'video') task = { ...task, intent: 'artifact', mode: 'edit', needsBase: false };
     // Файлы на компьютере/в папке обрабатывает соответствующий помощник, не JSON edits.
     const folderActive = b.folder && typeof b.folder === 'object' && typeof b.folder.name === 'string';
-    const localArtifact = !folderActive && !(b.agent && agent.connected(currentUser(req)?.id));
+    const localArtifact = !folderActive && !(b.agent && agent.connected(currentUser(req)?.id)) && !(b.cloud && cloudOn(currentUser(req)));
     // needsBase без кода — не блокируем (409 убран по запросу пользователя): модель отвечает в обычном режиме
     const editMode = localArtifact && task.mode === 'edit' && !task.needsBase;
     const intent = task.intent;
@@ -1093,13 +1134,14 @@ async function handleApi(req, res, url) {
     const vidOn = videor.ready(st), useVid = vidOn && intent !== 'artifact' && bill.left(user, 'v') > 0;
     const fold = b.folder && typeof b.folder === 'object' && typeof b.folder.name === 'string' ? { name: b.folder.name.slice(0, 120), tree: String(b.folder.tree || '').slice(0, 8000) } : null;
     const useAgent = !!b.agent && agent.connected(user.id);
+    const useCloud = !!b.cloud && !useAgent && cloudOn(user), cloudQuota = useCloud ? cloud.quotaMB(bill.planOf(user)) : 0;
     // Проверка HTML относится к артефакту в чате, не к файлу на ПК.
-    const artifact = intent === 'artifact' && !fold && !useAgent;
-    const tools = [...(!fold && !useAgent ? [assets.TOOL] : []), ...(useWeb ? web.TOOLS : []), ...(useWeb && useBrowser && model.vision ? [VIEW_TOOL] : []), ...(mem.on ? MEM_TOOLS : []), ...(useCode ? [coder.TOOL] : []), ...(useImg ? [imager.TOOL] : []), ...(useVid ? [videor.TOOL] : []), ...(fold ? folder.TOOLS : []), ...(useAgent ? agent.TOOLS : [])]
+    const artifact = intent === 'artifact' && !fold && !useAgent && !useCloud;
+    const tools = [...(!fold && !useAgent && !useCloud ? [assets.TOOL] : []), ...(useWeb ? web.TOOLS : []), ...(useWeb && useBrowser && model.vision ? [VIEW_TOOL] : []), ...(mem.on ? MEM_TOOLS : []), ...(useCode ? [coder.TOOL] : []), ...(useImg ? [imager.TOOL] : []), ...(useVid ? [videor.TOOL] : []), ...(fold ? folder.TOOLS : []), ...(useAgent ? agent.TOOLS : []), ...(useCloud ? cloud.TOOLS : [])]
       .filter((t) => !artifact || chatPolicy.toolAllowed(t.function.name, intent));
-    const notes = (fold ? folder.note(fold) : '') + (useAgent ? agent.note(agent.info(user.id)) : '') + (useImg ? imager.NOTE : imgOn && intent !== 'artifact' ? imager.LIMIT : '') + (useVid ? videor.NOTE : vidOn && intent !== 'artifact' ? videor.LIMIT : '') + (useWeb && useBrowser ? BROWSER_NOTE + (model.vision && !artifact ? BROWSER_VIEW_NOTE : '') : '') + (mem.on ? memNote(mem.items) : '') + (useCode && !artifact ? coder.NOTE : '') + (sitesLeft || editMode ? '' : LIMIT_SITE) + (st.code && !useCode && bill.left(user, 'c') <= 0 ? LIMIT_CODE : '') +
+    const notes = (fold ? folder.note(fold) : '') + (useAgent ? agent.note(agent.info(user.id)) : '') + (useCloud ? cloud.note(cloudQuota) : '') + (useImg ? imager.NOTE : imgOn && intent !== 'artifact' ? imager.LIMIT : '') + (useVid ? videor.NOTE : vidOn && intent !== 'artifact' ? videor.LIMIT : '') + (useWeb && useBrowser ? BROWSER_NOTE + (model.vision && !artifact ? BROWSER_VIEW_NOTE : '') : '') + (mem.on ? memNote(mem.items) : '') + (useCode && !artifact ? coder.NOTE : '') + (sitesLeft || editMode ? '' : LIMIT_SITE) + (st.code && !useCode && bill.left(user, 'c') <= 0 ? LIMIT_CODE : '') +
       (artifact ? editMode ? artifactEdit.EDIT_NOTE : chatPolicy.ARTIFACT_NOTE + '\nРежим создания: выполни новую задачу; предыдущие версии не являются закреплённой основой.' : '');
-    convo[0].content += notes + (!fold && !useAgent ? assets.NOTE + (artifact ? gameCheck.NOTE : '') : '');
+    convo[0].content += notes + (!fold && !useAgent && !useCloud ? assets.NOTE + (artifact ? gameCheck.NOTE : '') : '');
     if (imgMode && useImg) convo[0].content += IMG_MODE_NOTE;
     if (artifact) out({ s: editMode ? 'edit' : 'create', q: editMode ? base.title : '' });
     let toolsOK = tools.length > 0, fellBack = false;
@@ -1271,6 +1313,8 @@ async function handleApi(req, res, url) {
                 (rr.files.length ? 'Созданы файлы (пользователь их видит и может скачать): ' + rr.files.map((f) => f.name).join(', ') : '');
             } else if (fold && folder.NAMES.has(c.name)) {
               result = await folder.ask(user.id, out, c.name, args, ac.signal);
+            } else if (useCloud && cloud.NAMES.has(c.name)) { // облако изолировано — без подтверждений, кроме ответов, где модель читала сайты
+              result = await agent.call(user.id, out, c.name, args, readWeb ? 'web' : 'all', ac.signal, (n, a, sig) => cloud.call(user.id, cloudQuota, n, a, sig));
             } else if (useAgent && agent.NAMES.has(c.name)) {
               result = await agent.call(user.id, out, c.name, args, b.agentAuto ? (readWeb ? 'web' : 'all') : false, ac.signal);
             } else if (c.name === 'generate_video' && useVid) {

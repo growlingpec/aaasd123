@@ -39,6 +39,7 @@ function planFeats(p) {
     lim(p.sites, 'website', 'websites', 'websites', 'Unlimited websites'),
     ...(BILL.images ? [lim(p.images, 'image', 'images', 'images', 'Unlimited images')] : []),
     ...(BILL.videos ? [p.videos === 0 ? 'No video' : lim(p.videos, 'videos', 'videos', 'videos', 'Unlimited video')] : []),
+    ...(BILL.cloud ? [p.pc === 0 ? 'No cloud computer' : 'Cloud computer' + (p.pc ? ' · ' + (p.pc >= 1024 ? +(p.pc / 1024).toFixed(1) + ' GB' : p.pc + ' MB') : '')] : []),
     p.id === 'pro' || p.id === 'max' || p.tier > 0 ? 'Publications without the Premier badge' : 'Publications with the Premier badge',
     'Web, memory, files and voice',
   ];
