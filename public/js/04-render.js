@@ -26,11 +26,33 @@ function renderTop() {
   $('crumb').innerHTML = (p ? esc(p.name) + (c ? ' / ' : '') : '') + (c ? '<b>' + esc(c.title) + '</b>' : '');
   $('ptag').textContent = p && !c ? 'в проекте «' + p.name + '»' : '';
 }
-const SUGG = [
-  ['i-edit', 'Составить план', 'Разложить задачу на шаги', 'Составь план запуска небольшого проекта'],
-  ['i-globe', 'Создать сайт', 'С живым превью рядом', 'Сделай одностраничный сайт для кофейни: меню, фото, контакты'],
-  ['i-code', 'Помочь с кодом', 'Написать или объяснить', 'Напиши функцию на JavaScript, которая убирает дубликаты из массива'],
-  ['i-brain', 'Сформулировать идею', 'Коротко и понятно', 'Помоги сформулировать идею продукта в двух предложениях']];
+// готовые сценарии на пустом чате: q — отправить сразу; fill — вставить в поле (дописать детали); file — ещё и выбрать файл;
+// cloud — нужен облачный компьютер (включается сам, на Free — предложение тарифа)
+const SUGG_BOT = { ic: 'i-tg', t: 'Telegram-бот', h: 'Код и запуск в облачном компьютере', cloud: true, fill: 'Сделай Telegram-бота на Python (aiogram 3) для напоминаний: /add 18:30 Купить молоко, /list, /del. Запусти его в облачном компьютере и проверь, что он отвечает. Мой токен от @BotFather: ' };
+const SUGG_CODE = { ic: 'i-code', t: 'Помочь с кодом', h: 'Написать или объяснить', q: 'Напиши функцию на JavaScript, которая убирает дубликаты из массива' };
+function suggList() {
+  const cloud = typeof CL !== 'undefined' && CL.st?.ok;
+  return [
+    { ic: 'i-globe', t: 'Лендинг', h: 'Сайт с живым превью за минуту', q: 'Сделай лендинг для кофейни «Зерно»: меню с ценами, галерея, отзывы и форма брони столика' },
+    { ic: 'i-game', t: 'Игра', h: 'В браузере, сразу можно играть', q: 'Сделай браузерную игру «Змейка»: управление стрелками и свайпами, счёт, рекорд и растущая скорость' },
+    cloud ? { ...SUGG_BOT, pro: !clOk() } : SUGG_CODE,
+    { ic: 'i-table', t: 'Разбор Excel', h: 'Цифры, тренды и график', file: true, fill: 'Разбери таблицу: главные цифры, тренды и аномалии — и построй понятный график' },
+  ];
+}
+function renderSugg() {
+  const c = cur(), empty = !c || !c.msgs.length;
+  $('sugg').innerHTML = empty && MODELS.length ? `<div class="sugg">${suggList().map((x, i) => `<button type="button" data-sg="${i}"><svg><use href="#${x.ic}"/></svg><span><b>${x.t}${x.pro ? ' <em class="sgpro">Pro</em>' : ''}</b><small>${x.h}</small></span></button>`).join('')}</div>` : '';
+}
+function pickSugg(i) {
+  const x = suggList()[i]; if (!x) return;
+  if (x.q) return send(x.q);
+  if (x.cloud) {
+    if (!clOk()) return openPlans('Telegram-боты и другие программы работают в облачном компьютере — он есть на тарифах Pro и Max.');
+    AG.mode = 'cloud'; AG.on = true; agSave(); agRender(); toast('Модель будет работать в облачном компьютере');
+  }
+  const q = $('q'); q.value = x.fill; grow(); renderSend(); q.focus(); q.setSelectionRange(q.value.length, q.value.length);
+  if (x.file) $('fileIn').click();
+}
 function greet() {
   const h = new Date().getHours(), g = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
   const n = ME.id !== 'guest' ? String(ME.name || '').trim().split(/\s+/)[0] : '';
@@ -40,7 +62,7 @@ function renderChat() {
   const c = cur(), col = $('col');
   const empty = !c || !c.msgs.length;
   document.querySelector('.main').classList.toggle('empty', empty);
-  $('sugg').innerHTML = empty && MODELS.length ? `<div class="sugg">${SUGG.map(([ic, t, h, q]) => `<button data-s="${esc(q)}"><svg><use href="#${ic}"/></svg><span><b>${t}</b><small>${h}</small></span></button>`).join('')}</div>` : '';
+  renderSugg();
   if (empty) {
     const p = S.projects.find((x) => x.id === S.proj);
     const sub = !MODELS.length ? 'Модели пока не подключены' : (p ? 'Новый чат в этом проекте' : 'Чем займёмся сегодня?');
@@ -115,7 +137,7 @@ function buildHistory(list) {
         ...(x.vids?.length ? ['сделаны видео: ' + x.vids.map((g) => '«' + (g.prompt || '').slice(0, 200) + '»').join(', ')] : []),
         fsSummary(x), agSummary(x)].filter(Boolean);
       if ((x.agops?.length || x.fsops?.length) && !log.some((l) => /компьютер|папк/.test(l))) log.push('действий на компьютере и в папке не было');
-      else if (!x.agops?.length && !x.fsops?.length && /(удал|созда|переимен|перемест|запуст|выполн)\S*/i.test(x.t || '') && (typeof AG !== 'undefined' && AG.conn)) log.push('инструменты компьютера в этом ответе НЕ вызывались — значит, ничего на компьютере не изменилось');
+      else if (!x.agops?.length && !x.fsops?.length && /(удал|созда|переимен|перемест|запуст|выполн)\S*/i.test(x.t || '') && (typeof AG !== 'undefined' && (AG.conn || clUsable()))) log.push('инструменты компьютера в этом ответе НЕ вызывались — значит, ничего на компьютере не изменилось');
     }
   }
   return out;

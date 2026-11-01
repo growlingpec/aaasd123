@@ -81,6 +81,12 @@ section{position:relative;padding:112px 0}
 .feat h3{font-size:18px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
 .feat p{color:var(--muted);font-size:15px;line-height:1.55}
 .feat.wide{grid-column:span 2;display:grid;grid-template-columns:1fr 1.15fr;gap:28px;align-items:center}
+.newb{display:inline-block;font-size:12px;font-weight:600;color:#fff;background:var(--accent);border-radius:7px;padding:3px 9px;margin-bottom:14px}
+.fl{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}.fl li{display:flex;gap:9px;align-items:flex-start;font-size:14.5px;line-height:1.5;color:var(--muted)}.fl svg{width:16px;height:16px;flex:none;margin-top:3px;color:var(--accent-l)}
+.feat .viz.term{background:#15130f;border-color:rgba(255,255,255,.08);color:#e9e4da;font:12.5px/1.8 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:0 0 14px;overflow:hidden}
+.tbar{display:flex;align-items:center;gap:5px;height:28px;padding:0 12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:10px}.tbar i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16)}.tbar span{margin-left:8px;font-size:11.5px;color:rgba(255,255,255,.45)}
+.tl{padding:0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tl b{color:#8fd19e;font-weight:600;margin-right:8px}.tl.dim{color:rgba(255,255,255,.45)}.tl.ok{color:#8fd19e}
+.tsite{display:flex;align-items:center;gap:9px;margin:12px 14px 0;height:38px;padding:0 6px 0 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;font:13px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e9e4da}.tsite svg{width:15px;height:15px;color:rgba(255,255,255,.5)}.tsite span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tsite em{font-style:normal;font-size:12.5px;font-weight:550;color:#fff;background:var(--accent);border-radius:7px;padding:5px 10px}
 .viz{border:1px solid var(--line);border-radius:14px;background:#0f0f10;padding:14px;font-size:13.5px}
 .mlist{display:flex;flex-direction:column;gap:4px}.mrow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--muted)}
 .mrow i{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}.mrow b{font-weight:550;color:var(--text)}.mrow small{color:var(--dim);font-size:12.5px}
@@ -244,10 +250,13 @@ body{font-weight:400}.wrap{max-width:1184px}section{padding:72px 0;scroll-margin
 .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.feat.wide{grid-column:auto;display:flex;flex-direction:column;align-items:stretch;gap:20px}.feat .viz{margin-top:auto}.feat .ft{min-width:0}.feat.wide .ft p{margin-bottom:0}.feat.t2{grid-column:auto}.show-prev{height:440px}.site{min-height:0}.pbar{flex:none}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.product-chat{padding:18px 16px}.feat.wide{gap:18px}}
 @media(max-width:600px){.hero{padding-top:32px}.product-demo{margin-top:26px}.product-chat{padding:16px;gap:10px}.product-answer{font-size:12px}.grid{grid-template-columns:minmax(0,1fr)}.show-prev{height:360px}.site{min-height:0}}
+/* «Облачный компьютер» — на всю ширину сетки: текст слева, терминал справа; на узких экранах — друг под другом */
+.feat.wide.full{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:center}.feat.full .viz{margin-top:0}
+@media(max-width:900px){.feat.wide.full{display:flex;flex-direction:column;align-items:stretch;gap:20px}}
 
 .product-model{margin-left:auto;font-size:10px;color:#a7b1c1;max-width:100px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style>
-<link rel="stylesheet" href="/landing.css?v=3">
+<link rel="stylesheet" href="/landing.css?v=4">
 </head>
 <body>
 <svg style="display:none"><defs>
@@ -259,7 +268,7 @@ body{font-weight:400}.wrap{max-width:1184px}section{padding:72px 0;scroll-margin
 <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4Z"/></symbol>
 <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></symbol>
 <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
-<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol><symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
 <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
 <symbol id="i-tg" viewBox="0 0 24 24"><path d="M21 4 3 11l6 2.2M21 4l-3 16-6.5-5M21 4 9 13.2m0 0V19l2.5-4"/></symbol>
 <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
@@ -315,6 +324,9 @@ body{font-weight:400}.wrap{max-width:1184px}section{padding:72px 0;scroll-margin
       <h2 class="h2 rv">Всё, что нужно для работы с ИИ</h2>
       <p class="sub rv">Без вкладок, подписок на десяток сервисов и сложных настроек.</p>
       <div class="grid">
+        <div class="feat wide full rv" id="cloud"><div class="ft"><span class="newb">Новое</span><div class="ic"><svg><use href="#i-term"/></svg></div><h3>Облачный компьютер</h3><p>Свой Linux прямо в Premier. Модель пишет код, сама ставит библиотеки, запускает и проверяет — вы получаете готовый сайт, бота или скрипт.</p>
+          <ul class="fl"><li><svg><use href="#i-check"/></svg>Python, Node.js и git уже установлены</li><li><svg><use href="#i-check"/></svg>Терминал и файлы в одном окне с чатом</li><li><svg><use href="#i-check"/></svg>Сайт открывается в браузере и публикуется по постоянной ссылке</li><li><svg><use href="#i-check"/></svg>Без серверов, VPS и настроек — файлы хранятся между чатами</li></ul></div>
+          <div class="viz term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span>premier@cloud: ~/coffee</span></div><div class="tl"><b>$</b>npm create vite@latest coffee -- --template react</div><div class="tl dim">Scaffolding project in ~/coffee… Done.</div><div class="tl"><b>$</b>npm install &amp;&amp; npx vite build --base=./</div><div class="tl ok">✓ built in 1.4s</div><div class="tl"><b>$</b>python3 bot.py</div><div class="tl ok">Бот @zerno_coffee_bot запущен</div><div class="tsite"><svg><use href="#i-globe"/></svg><span>premier/s/zerno</span><em>Открыть сайт</em></div></div></div>
         <div class="feat wide rv"><div class="ft"><div class="ic"><svg><use href="#i-layers"/></svg></div><h3>Несколько моделей</h3><p>Переключайтесь между моделями в один клик: быстрая для простого, мощная для сложного.</p></div>
           <div class="viz" aria-hidden="true"><div class="mlist"><div class="mrow on"><i></i><b>DeepSeek / Gemini</b><small>быстрая для простых вопросов</small><svg><use href="#i-check"/></svg></div><div class="mrow"><i></i><b>GPT 6.1 Sol / Qwen 3.8 Max</b><small>умная для кода и анализа</small></div><div class="mrow"><i></i><b>Kimi K3 / GPT 6 Astra</b><small>лучше понимает картинки и скриншоты</small></div></div></div></div>
         <div class="feat rv d1"><div class="ic"><svg><use href="#i-globe"/></svg></div><h3>Сайты, игры и код Python с живым превью</h3><p>Попросите сайт, игру или инструмент — он откроется рядом с чатом и сразу заработает.</p><div class="viz mini mini-site" aria-hidden="true"><div class="msb"><i></i><i></i><i></i><span>Превью · Telegram-бот</span></div><div class="msc"><div class="l"><i></i><i></i><i></i><u></u></div><div class="r"></div></div></div></div>
@@ -415,6 +427,7 @@ body{font-weight:400}.wrap{max-width:1184px}section{padding:72px 0;scroll-margin
       lim(p.code, 'запуск', 'запуска', 'запусков', 'Python без ограничений', ' Python в день'),
       lim(p.sites, 'сайт', 'сайта', 'сайтов', 'Сайты без ограничений', ' в день'), ...(d.images ? [lim(p.images, 'картинка', 'картинки', 'картинок', 'Картинки без ограничений', ' в день')] : []), p.id === 'pro' || p.id === 'max' || p.tier > 0 ? 'Публикации без плашки Premier' : 'Публикации с плашкой Premier', 'Интернет, память, файлы и голос'];
     f.push('API для Cursor, Codex и Claude Code');
+    if (d.cloud && p.pc) f.push('Облачный компьютер · ' + (p.pc >= 1024 ? +(p.pc / 1024).toFixed(1) + ' ГБ' : p.pc + ' МБ'));
     return `<div class="tier${hot ? ' hot' : ''}">${hot ? '<span class="tag">Популярный</span>' : ''}<div><h3>${esc(p.name)}</h3><p class="d">${esc(description)}</p></div>
       <div class="pr2">${p.price ? Number(p.price).toLocaleString('ru-RU') + ' ₽' : '0 ₽'} <small>${p.price ? '/ ' + p.days + ' дней' : 'навсегда'}</small></div>
       <ul>${f.map((x) => `<li><svg><use href="#i-check"/></svg><span>${esc(x)}</span></li>`).join('')}</ul>

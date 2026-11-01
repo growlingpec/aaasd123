@@ -51,6 +51,7 @@ document.addEventListener('click', (e) => {
   else if (d.p) { switchTo(() => { S.proj = S.proj === d.p ? null : d.p; S.cur = null; }); closeMobile(); save(); return; }
   else if (d.c) { if (d.c === S.cur) { closeMobile(); return; } switchTo(() => { S.cur = d.c; }); closeMobile(); save(); return; }
   else if (d.s) { send(d.s); return; }
+  else if (d.sg !== undefined) { pickSugg(+d.sg); return; }
   else if (d.copy !== undefined) { navigator.clipboard?.writeText(cur().msgs[+d.copy].t); flash(b); return; }
   else if (d.copycode !== undefined) { navigator.clipboard?.writeText(b.closest('.pre').querySelector('code').innerText); b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1400); return; }
   else if (d.redo !== undefined) { const c = cur(); if (busyMap.has(c.id)) return; const i = +d.redo; c.msgs.splice(i); const a = { id: uid(), r: 'a', t: '' }; c.msgs.push(a); stream(c, a); return; }

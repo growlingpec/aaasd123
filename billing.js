@@ -14,9 +14,9 @@ const DEF = {
   burst: 20,   // антиабуз: не больше N сообщений за 5 минут на одного пользователя
   fair: 1000,  // антиабуз для «безлимита»: потолок сообщений в день
   plans: [
-    { id: 'free', name: 'Free', price: 0, days: 0, tier: 0, msgs: 20, code: 3, sites: 3, images: 3, videos: 0, desc: 'Чтобы попробовать' },
-    { id: 'pro', name: 'Pro', price: 390, days: 30, tier: 1, msgs: 300, code: 50, sites: 30, images: 30, videos: 3, desc: 'Все модели и запас на каждый день' },
-    { id: 'max', name: 'Max', price: 990, days: 30, tier: 2, msgs: null, code: null, sites: null, images: 100, videos: 10, desc: 'Без ограничений — для работы' },
+    { id: 'free', name: 'Free', price: 0, days: 0, tier: 0, msgs: 20, code: 3, sites: 3, images: 3, videos: 0, pc: 0, desc: 'Чтобы попробовать' },
+    { id: 'pro', name: 'Pro', price: 390, days: 30, tier: 1, msgs: 300, code: 50, sites: 30, images: 30, videos: 3, pc: 1024, desc: 'Все модели и запас на каждый день' },
+    { id: 'max', name: 'Max', price: 990, days: 30, tier: 2, msgs: null, code: null, sites: null, images: 100, videos: 10, pc: 5120, desc: 'Без ограничений — для работы' },
   ],
 };
 const cfg = () => {
@@ -24,6 +24,7 @@ const cfg = () => {
   for (const p of c.plans) {
     if (p.images === undefined) p.images = (DEF.plans.find((x) => x.id === p.id) || { images: 10 }).images; // картинки стоят денег — по умолчанию с лимитом
     if (p.videos === undefined) p.videos = (DEF.plans.find((x) => x.id === p.id) || { videos: 0 }).videos; // видео ещё дороже
+    if (p.pc === undefined) p.pc = (DEF.plans.find((x) => x.id === p.id) || { pc: 0 }).pc; // облачный компьютер, МБ (null — потолок сервера)
   }
   return { ...DEF, ...c };
 };
@@ -39,7 +40,7 @@ const init = (x) => { US = x; };
 function planOf(u) {
   const now = Date.now();
   let p = null;
-  if (u.plan && u.until > now) p = cfg().plans.find((x) => x.id === u.plan) || null;
+  if (u.plan && u.until > now) { const x = cfg().plans.find((y) => y.id === u.plan); p = x ? { ...x, until: u.until } : null; } // until — для плашки публикаций и срока в кабинете
   if (!p) p = cfg().plans.find((x) => x.id === 'free');
   // временное админское продление лимита сообщений (u.msgExt = {limit, until}) — только вверх
   const ext = u && u.msgExt && u.msgExt.until > now && Number(u.msgExt.limit) > 0 ? Math.floor(Number(u.msgExt.limit)) : 0;
@@ -108,11 +109,11 @@ const resetsAt = () => Date.parse(today() + 'T00:00:00+03:00') + 86400000;
 
 // на каких тарифах доступна модель (старые модели без списка — по «уровню»)
 function modelPlans(m) { const c = cfg(); return Array.isArray(m.plans) ? m.plans.filter((id) => c.plans.some((p) => p.id === id)) : c.plans.filter((p) => p.tier >= (m.tier || 0)).map((p) => p.id); }
-const publicPlans = () => cfg().plans.map(({ id, name, price, days, tier, msgs, code, sites, images, videos, desc }) => ({ id, name, price, days, tier, msgs, code, sites, images, videos, desc }));
+const publicPlans = () => cfg().plans.map(({ id, name, price, days, tier, msgs, code, sites, images, videos, pc, desc }) => ({ id, name, price, days, tier, msgs, code, sites, images, videos, pc, desc }));
 function summary(u) {
   const p = planOf(u), x = used(u.id), c = cfg();
   return { publicationBranding: needsBranding(u, p), plan: { id: p.id, name: p.name, tier: p.tier, until: p.until, trial: !!(u.trial && p.until) }, used: x,
-    limits: { m: limitOf(p, 'm'), c: limitOf(p, 'c'), s: limitOf(p, 's'), i: limitOf(p, 'i'), v: limitOf(p, 'v') }, images: !!(US.imagesOn && US.imagesOn()), videos: !!(US.videosOn && US.videosOn()), unlimited: p.msgs == null,
+    limits: { m: limitOf(p, 'm'), c: limitOf(p, 'c'), s: limitOf(p, 's'), i: limitOf(p, 'i'), v: limitOf(p, 'v') }, images: !!(US.imagesOn && US.imagesOn()), videos: !!(US.videosOn && US.videosOn()), cloud: !!(US.cloudOn && US.cloudOn()), unlimited: p.msgs == null,
     plans: publicPlans(), resetPrice: RESET.price, pay: payReady() || cryptoReady() || cisReady() || rbReady(), methods: { card: payReady(), robokassa: rbReady(), cispay: cisReady(), crypto: cryptoReady() }, trialDays: c.trialDays, ref: refInfo(u) };
 }
 
@@ -442,7 +443,7 @@ function saveCfg(b) {
     if (typeof n.name === 'string' && n.name.trim()) p.name = n.name.trim().slice(0, 30);
     if (typeof n.desc === 'string') p.desc = n.desc.trim().slice(0, 120);
     if (p.id !== 'free') { p.price = num(n.price, p.price) ?? p.price; p.days = Math.max(1, num(n.days, p.days) ?? p.days); }
-    for (const k of ['msgs', 'code', 'sites', 'images', 'videos']) if (k in n) p[k] = num(n[k], p[k]);
+    for (const k of ['msgs', 'code', 'sites', 'images', 'videos', 'pc']) if (k in n) p[k] = num(n[k], p[k]);
   }
   if ('trialDays' in b) c.trialDays = Math.min(90, num(b.trialDays, c.trialDays) ?? 0);
   if ('burst' in b) c.burst = num(b.burst, c.burst) ?? 0;

@@ -288,7 +288,7 @@ R.plans = async () => {
       return `<div class="plan${p.tier === 1 ? ' hot' : ''}" data-pid="${p.id}"><h3>${planBadge(p.id)}<span style="flex:1"></span></h3>
         <div class="grid g2" style="gap:0 12px"><label class="field"><span>Название</span><input data-k="name" value="${esc(p.name)}" maxlength="30"></label>${num(p, 'price', 'Цена, ₽', '0', p.id === 'free')}</div>
         <label class="field"><span>Описание</span><input data-k="desc" value="${esc(p.desc || '')}" maxlength="120"></label>
-        <div class="grid g2" style="gap:0 12px">${num(p, 'days', 'Срок, дней', '—', p.id === 'free')}${num(p, 'msgs', 'Сообщений в день')}${num(p, 'code', 'Python в день')}${num(p, 'sites', 'Сайтов в день')}${num(p, 'images', 'Картинок в день')}${num(p, 'videos', 'Видео в день')}</div>
+        <div class="grid g2" style="gap:0 12px">${num(p, 'days', 'Срок, дней', '—', p.id === 'free')}${num(p, 'msgs', 'Сообщений в день')}${num(p, 'code', 'Python в день')}${num(p, 'sites', 'Сайтов в день')}${num(p, 'images', 'Картинок в день')}${num(p, 'videos', 'Видео в день')}${num(p, 'pc', 'Облачный компьютер, МБ (0 — нет)')}</div>
         <div class="mods"><b style="color:var(--muted);font-weight:500">Модели:</b> ${mods.length ? mods.join(', ') : 'нет — выберите во вкладке «Модели»'}</div></div>`; }).join('')}</div>
     <div class="card" style="margin-top:16px"><h2>Общие настройки</h2><div class="sub">Пустое поле лимита = без ограничений. Лимиты считаются за сутки по Москве.</div>
       <div class="grid g3" style="gap:0 14px">

@@ -1,46 +1,57 @@
 /* ---------- Компьютер пользователя через программу-помощник Premier Agent ----------
    Помощник запускается на ПК и привязывается по коду. Модель предлагает действие (команду, запись файла…),
    пользователь жмёт «Разрешить» — и только тогда помощник его выполняет. Чтение и просмотр — без подтверждения. */
-const AG = { on: true, conn: false, info: {}, auto: false, timer: 0 };
-try { AG.on = localStorage.getItem('premier:agon') !== '0'; AG.auto = localStorage.getItem('premier:agauto') === '1'; } catch {}
-const AG_LBL = { computer_run: 'Команда', computer_list: 'Посмотрел папку', computer_read: 'Прочитал файл', computer_write: 'Запись файла', computer_edit: 'Правка файла', computer_mkdir: 'Новая папка', computer_move: 'Перемещение', computer_delete: 'Удаление', computer_open: 'Открыть' };
-const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext' };
-const agUsable = () => AG.on && AG.conn;
-const agSave = () => { try { localStorage.setItem('premier:agon', AG.on ? '1' : '0'); localStorage.setItem('premier:agauto', AG.auto ? '1' : '0'); } catch {} };
+const AG = { on: true, conn: false, info: {}, auto: false, timer: 0, mode: 'pc' }; // mode: 'pc' — ПК через помощник, 'cloud' — облачный компьютер (cloud.js)
+try { AG.on = localStorage.getItem('premier:agon') !== '0'; AG.auto = localStorage.getItem('premier:agauto') === '1'; AG.mode = localStorage.getItem('premier:agmode') === 'cloud' ? 'cloud' : 'pc'; } catch {}
+const AG_LBL = { computer_run: 'Команда', computer_list: 'Посмотрел папку', computer_read: 'Прочитал файл', computer_write: 'Запись файла', computer_edit: 'Правка файла', computer_mkdir: 'Новая папка', computer_move: 'Перемещение', computer_delete: 'Удаление', computer_open: 'Открыть', computer_preview: 'Сайт', computer_publish: 'Публикация' };
+const AG_IC = { computer_run: 'term', computer_list: 'folder', computer_read: 'file', computer_write: 'edit', computer_edit: 'edit', computer_mkdir: 'folder', computer_move: 'edit', computer_delete: 'trash', computer_open: 'ext', computer_preview: 'globe', computer_publish: 'share' };
+const agUsable = () => AG.on && AG.mode !== 'cloud' && AG.conn;
+const agSave = () => { try { localStorage.setItem('premier:agon', AG.on ? '1' : '0'); localStorage.setItem('premier:agauto', AG.auto ? '1' : '0'); localStorage.setItem('premier:agmode', AG.mode); } catch {} };
 
 async function agStatus() {
   clearTimeout(AG.timer);
   try {
     const j = await memApi('/api/agent/status'), was = AG.conn; AG.conn = !!j.connected; AG.info = j.info || {}; agRender();
-    if (!was && AG.conn && $('agSetup')) { closePanel(); AG.on = true; agSave(); agRender(); toast('Компьютер «' + (AG.info.host || '') + '» подключён — модель может с ним работать'); }
+    if (!was && AG.conn && $('agSetup')) { closePanel(); AG.on = true; AG.mode = 'pc'; agSave(); agRender(); toast('Компьютер «' + (AG.info.host || '') + '» подключён — модель может с ним работать'); }
   } catch {}
   AG.timer = setTimeout(agStatus, $('agSetup') && $('modal').classList.contains('on') ? 2500 : 20000);
 }
 function agInit() { agRender(); agStatus(); document.addEventListener('visibilitychange', () => { if (!document.hidden) agStatus(); }); }
 function agRender() {
-  const b = $('agBtn'); if (!b) return; const on = agUsable();
+  const b = $('agBtn'); if (!b) return;
+  const cloud = AG.mode === 'cloud' && typeof clOk === 'function' && clOk(), on = cloud ? AG.on : agUsable();
   b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
-  b.querySelector('span').textContent = AG.conn ? (AG.info.host || 'Компьютер') : 'Компьютер';
-  b.classList.toggle('dot', AG.conn);
-  b.title = !AG.conn ? 'Дать модели доступ к компьютеру через программу-помощник' : on ? 'Модель может работать с компьютером «' + (AG.info.host || '') + '»' : 'Помощник подключён, но выключен для чата';
+  b.querySelector('span').textContent = cloud ? 'Облако' : AG.conn ? (AG.info.host || 'Компьютер') : 'Компьютер';
+  b.classList.toggle('dot', cloud || AG.conn);
+  b.title = cloud ? (on ? 'Модель работает в облачном компьютере Premier' : 'Облачный компьютер выключен для чата') : !AG.conn ? 'Дать модели доступ к компьютеру через программу-помощник' : on ? 'Модель может работать с компьютером «' + (AG.info.host || '') + '»' : 'Помощник подключён, но выключен для чата';
 }
 function agMenu() {
-  if (!AG.conn) return agSetup();
+  const cloudOn = typeof CL !== 'undefined' && !!CL.st?.ok; // облачный компьютер есть на этом сервере
+  if (!cloudOn && !AG.conn) return agSetup();
   let m = $('agMenu'); if (m) { m.remove(); return; }
+  const cloud = cloudOn && AG.mode === 'cloud';
   m = document.createElement('div'); m.id = 'agMenu'; m.className = 'fsmenu';
-  m.innerHTML = `<div class="fsm-h"><svg><use href="#i-term"/></svg><b>${esc(AG.info.host || 'Компьютер')}</b></div><div class="agm-sub">${esc(AG.info.os || '')}</div>
-    <label class="fsm-ck"><input type="checkbox" id="agOn"${AG.on ? ' checked' : ''}><span>Использовать в чате</span></label>
-    <label class="fsm-ck"><input type="checkbox" id="agAuto"${AG.auto ? ' checked' : ''}><span>Выполнять без подтверждения <em>(опасно)</em></span></label>
-    <button type="button" data-agm="help">Как это работает</button><button type="button" data-agm="off" class="danger">Отключить компьютер</button>`;
+  m.innerHTML = (cloudOn ? `<div class="fsm-h"><svg><use href="#i-term"/></svg><b>Где работает модель</b></div>
+    <button type="button" class="agpick${cloud ? ' on' : ''}" data-agm="cloud"><b>Облачный компьютер</b><small>${clOk() ? `Linux в Premier · ${clMb(CL.st.usedMB)} из ${clMb(CL.st.quotaMB)}` : clFiles() ? 'Тариф закончился — файлы можно скачать' : 'Доступен на платных тарифах'}</small></button>
+    <button type="button" class="agpick${cloud ? '' : ' on'}" data-agm="pc"><b>${esc(AG.conn ? AG.info.host || 'Мой компьютер' : 'Мой компьютер')}</b><small>${esc(AG.conn ? AG.info.os || '' : 'Через программу-помощник')}</small></button>`
+    : `<div class="fsm-h"><svg><use href="#i-term"/></svg><b>${esc(AG.info.host || 'Компьютер')}</b></div><div class="agm-sub">${esc(AG.info.os || '')}</div>`) +
+    `<label class="fsm-ck"><input type="checkbox" id="agOn"${AG.on ? ' checked' : ''}><span>Использовать в чате</span></label>
+    ${!cloud && AG.conn ? `<label class="fsm-ck"><input type="checkbox" id="agAuto"${AG.auto ? ' checked' : ''}><span>Выполнять без подтверждения <em>(опасно)</em></span></label>` : ''}
+    ${cloudOn && clFiles() ? `<button type="button" data-agm="term">${clOk() ? 'Терминал и файлы' : 'Мои файлы в облаке'}</button>` : ''}${cloud ? '' : '<button type="button" data-agm="help">Как это работает</button>'}${AG.conn ? `<button type="button" data-agm="off" class="danger">${cloudOn ? 'Отключить мой компьютер' : 'Отключить компьютер'}</button>` : ''}`;
   $('agBtn').parentElement.appendChild(m);
+  const use = (mode, msg) => { AG.mode = mode; AG.on = true; agSave(); agRender(); toast(msg); };
   m.onclick = async (e) => {
     const b = e.target.closest('[data-agm]'); if (!b) return; m.remove();
-    if (b.dataset.agm === 'help') return agSetup(true);
+    const a = b.dataset.agm;
+    if (a === 'help') return agSetup(true);
+    if (a === 'term') return clOpen();
+    if (a === 'cloud') return clOk() ? use('cloud', 'Модель работает в облачном компьютере') : openPlans('Облачный компьютер — свой Linux в Premier, где модель пишет и запускает код, — доступен на платных тарифах.');
+    if (a === 'pc') return AG.conn ? use('pc', 'Модель работает с компьютером «' + (AG.info.host || '') + '»') : agSetup();
     if (!confirm('Отключить помощник? Чтобы подключить снова, понадобится новый код.')) return;
     try { await memApi('/api/agent/off', { method: 'POST' }); AG.conn = false; agRender(); toast('Компьютер отключён'); } catch (er) { toast(er.message); }
   };
-  $('agOn').onchange = (e) => { AG.on = e.target.checked; agSave(); agRender(); toast(AG.on ? 'Модель может работать с компьютером' : 'Доступ к компьютеру для чата выключен'); };
-  $('agAuto').onchange = (e) => {
+  $('agOn').onchange = (e) => { AG.on = e.target.checked; agSave(); agRender(); toast(!AG.on ? 'Доступ к компьютеру для чата выключен' : cloud ? 'Модель работает в облачном компьютере' : 'Модель может работать с компьютером'); };
+  if ($('agAuto')) $('agAuto').onchange = (e) => {
     if (e.target.checked && !confirm('Модель сможет выполнять команды и менять файлы на компьютере без вашего подтверждения. Включить?')) { e.target.checked = false; return; }
     AG.auto = e.target.checked; agSave(); if (AG.auto) toast('Действия будут выполняться сразу — следите за чатом');
   };
@@ -82,7 +93,7 @@ function agHandle(o, msg) {
 }
 function agResult(o, msg) {
   const op = (msg.agops || []).find((x) => x.id === o.cid); if (!op) return;
-  op.state = o.state; if (o.out != null) op.out = String(o.out); renderChat(); if (o.state !== 'run') toBottom();
+  op.state = o.state; if (o.out != null) op.out = String(o.out); if (o.port) op.port = +o.port; if (typeof o.url === 'string' && /^\/s\/[a-f0-9]{10}$/.test(o.url)) op.url = o.url; renderChat(); if (o.state !== 'run') toBottom();
 }
 function agSummary(m) {
   const ch = (m.agops || []).filter((o) => o.write); if (!ch.length) return '';
@@ -93,9 +104,13 @@ function agHtml(m) {
   if (!m.agops?.length) return '';
   return `<div class="fsops">${m.agops.map((o0) => {
     const o = (o0.state === 'ask' || o0.state === 'run') && !m.live ? { ...o0, state: o0.state === 'ask' ? 'no' : 'err', out: o0.out || 'прервано' } : o0;
+    if (o.name === 'computer_preview' && o.state === 'ok' && o.port) // сайт из облачного компьютера — кнопка на адрес превью
+      return `<div class="step clsite"><svg><use href="#i-globe"/></svg><span>Сайт на порту ${+o.port}</span><a class="btn pri" href="/api/cloud/open?port=${+o.port}" target="_blank" rel="noopener">Открыть сайт</a></div>`;
+    if (o.name === 'computer_publish' && o.state === 'ok' && o.url) // опубликованная папка — постоянная ссылка
+      return `<div class="step clsite"><svg><use href="#i-share"/></svg><span>Опубликовано: <code>${esc(location.host + o.url)}</code></span><a class="btn pri" href="${esc(o.url)}" target="_blank" rel="noopener">Открыть сайт</a></div>`;
     if (!o.write) { // просмотр/чтение — компактная строка
       const on = o.state === 'run' || o.state === 'ask';
-      return `<div class="step${on ? ' on' : ''}${o.state === 'err' ? ' bad' : ''}"><svg><use href="#i-${o.state === 'err' ? 'warn' : AG_IC[o.name]}"/></svg><span>${esc(o.state === 'err' ? 'Не удалось: ' + (o.out || '').replace(/^Ошибка:\s*/, '') : (on ? (o.name === 'computer_list' ? 'Смотрю папку ' : 'Читаю ') : AG_LBL[o.name] + ' ') + (o.args.path || ''))}</span></div>`;
+      return `<div class="step${on ? ' on' : ''}${o.state === 'err' ? ' bad' : ''}"><svg><use href="#i-${o.state === 'err' ? 'warn' : AG_IC[o.name]}"/></svg><span>${esc(o.state === 'err' ? 'Не удалось: ' + (o.out || '').replace(/^Ошибка:\s*/, '') : (on ? (o.name === 'computer_list' ? 'Смотрю папку ' : o.name === 'computer_preview' ? 'Проверяю сайт на порту ' : 'Читаю ') : AG_LBL[o.name] + ' ') + (o.args.path || o.args.port || ''))}</span></div>`;
     }
     const st = { ask: 'Ждёт разрешения', run: 'Выполняется…', ok: 'Выполнено', no: 'Отклонено', err: 'Ошибка' }[o.state];
     const c = o.args.content ?? (o.name === 'computer_edit' ? null : undefined);

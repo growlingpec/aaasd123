@@ -21,8 +21,10 @@ function seed(dir, { users = [{ id: 'u1', login: 'anna', email: 'anna@example.co
 }
 const freePort = () => new Promise((ok) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => ok(p)); }); });
 
+// env — объект или функция от порта (когда переменной нужен адрес сервера)
 async function startServer(dir, env = {}) {
   const port = await freePort();
+  if (typeof env === 'function') env = env(port);
   const p = spawn(process.execPath, ['server.js'], { cwd: dir, env: { PATH: process.env.PATH, PORT: String(port), HOST: '127.0.0.1', ADMIN_PASSWORD: 'Test-Admin-Pass-2026', CODE_RUNNER: 'off', ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; p.stdout.on('data', (d) => (log += d)); p.stderr.on('data', (d) => (log += d));
   const base = `http://127.0.0.1:${port}`;

@@ -142,7 +142,7 @@ async function stream(c, msg, resumed) {
       const r = await fetch('/api/chat', { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         model: model.id, messages: history, instructions: proj?.instructions || '', web: !!(S.web && CFG.search), img: !!S.img, mid: msg.id,
         ...(pinned ? { currentArtifact: { source: pinned.source } } : {}),
-        ...(folderInfo ? { folder: folderInfo } : {}), ...(agUsable() ? { agent: true, agentAuto: AG.auto } : {}),
+        ...(folderInfo ? { folder: folderInfo } : {}), ...(agUsable() ? { agent: true, agentAuto: AG.auto } : {}), ...(clUsable() ? { cloud: true } : {}),
       }) });
       if (r.status === 401) return toLogin();
       if (!r.ok) { const j = await r.json().catch(() => ({})); if (j.code === 'limit' || j.code === 'model') { setTimeout(() => openPlans(j.error), 300); loadBill(); } throw new Error(j.error || 'Server error ' + r.status); }
