@@ -1,0 +1,22 @@
+# Caddy сам получает и продлевает HTTPS-сертификат. /etc/caddy/Caddyfile
+# Замените example.ru на ваш домен (DNS-запись A должна указывать на сервер).
+example.ru {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+		# ответы модели идут потоком — не буферизуем
+		flush_interval -1
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	request_body {
+		max_size 45MB
+	}
+}
+
+# www → без www
+www.example.ru {
+	redir https://example.ru{uri} permanent
+}

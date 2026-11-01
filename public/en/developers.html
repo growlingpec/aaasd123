@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F7F4EE" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12110F" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex,nofollow">
+<title>API · Premier</title>
+<link rel="preload" href="/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/tokens.css?v=2">
+<link rel="stylesheet" href="/developers.css?v=2">
+<script src="/en/developers.js?v=5" defer></script>
+<link rel="stylesheet" href="/language.css?v=1">
+<link rel="stylesheet" href="/theme/language.gen.css?v=4"><link rel="stylesheet" href="/theme/developers.gen.css?v=4"><link rel="stylesheet" href="/theme/app.css?v=7">
+<script src="/language.js?v=1"></script>
+</head>
+<body>
+<svg class="svg-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+<symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="ic-model" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+<symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="5"/><path d="m11.5 11.5 9 9M16 16l3-3m0 6 3-3"/></symbol>
+<symbol id="ic-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-15-2 20"/></symbol>
+<symbol id="ic-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></symbol>
+<symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="ic-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="ic-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 4-5 7-8 9-3-2-8-5-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+</svg>
+<div class="app-shell">
+<aside class="sidebar" aria-label="Developer navigation">
+  <a class="brand" href="/chat" aria-label="Premier, back to chat"><span class="brand-mark">P</span>Premier<span class="brand-tag">API</span></a>
+  <div class="nav-label">Developers</div>
+  <nav class="side-nav">
+    <a class="nav-item active" href="#overview"><svg><use href="#ic-grid"/></svg>Overview</a>
+    <a class="nav-item" href="#models"><svg><use href="#ic-model"/></svg>Models<span id="navModels" class="nav-count">—</span></a>
+    <a class="nav-item" href="#keys"><svg><use href="#ic-key"/></svg>API keys</a>
+    <a class="nav-item" href="#quickstart"><svg><use href="#ic-code"/></svg>Quick start</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="plan-card"><div class="plan-line"><span>Your plan</span><strong id="planName">—</strong></div><div class="plan-progress" role="presentation"><span id="planBar"></span></div><p id="planUsage">Limits are shared with chat</p></div>
+    <a class="back-link" href="/chat"><svg><use href="#ic-arrow"/></svg>Back to chat</a>
+  </div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><div class="breadcrumb">Premier <svg><use href="#ic-chevron"/></svg><span>For developers</span></div><div class="language-top"><nav class="language-switch" aria-label="Interface language"><a href="?lang=ru" data-language="ru" aria-label="Russian">RU</a><a href="?lang=en" data-language="en" aria-label="English">EN</a></nav><div class="user-chip"><span id="userAvatar" class="avatar">P</span><span id="userName">Account</span></div></div></header>
+  <main id="overview" tabindex="-1">
+    <div class="page-heading"><div><div class="eyebrow">PREMIER API</div><h1>Your models. Your applications.</h1><p class="page-description">Everything you need to connect, in one place.</p></div><button class="button primary" data-create-key disabled><svg><use href="#ic-plus"/></svg>Create key</button></div>
+    <div id="pageError" class="page-error" role="alert" hidden><span id="errorText"></span><button id="reloadPage" class="button">Try again</button></div>
+    <section class="endpoint-card" aria-labelledby="connectionTitle">
+      <div class="endpoint-label"><span class="icon-box"><svg><use href="#ic-code"/></svg></span><div><h2 id="connectionTitle">Connection</h2><p>OpenAI-compatible API</p></div></div>
+      <div class="endpoint-value"><span class="field-caption">BASE URL</span><div class="endpoint-input"><input id="apiBaseUrl" aria-label="Base URL" readonly placeholder="Loading address…"><button class="icon-button" id="apiCopyBase" aria-label="Copy Base URL" title="Copy Base URL" disabled><svg><use href="#ic-copy"/></svg></button></div></div>
+      <span class="protocol-badge">Chat Completions</span>
+    </section>
+    <div class="dashboard-grid">
+      <section id="models" class="models-section" aria-labelledby="modelsTitle">
+        <div class="section-heading"><div><h2 id="modelsTitle">Models <span id="modelCount" class="count-badge">—</span></h2><p>Available on your plan</p></div></div>
+        <div id="apiModelList" class="model-grid" aria-live="polite"><div class="loading-state">Loading models…</div></div>
+        <div class="model-note"><svg><use href="#ic-shield"/></svg><p>One account, shared limits with chat. Each model card shows the cost per request.</p></div>
+      </section>
+      <section id="quickstart" class="quickstart panel" aria-labelledby="quickstartTitle">
+        <div class="quickstart-heading"><div><span class="small-label">FROM IDEA TO YOUR FIRST REQUEST</span><h2 id="quickstartTitle">Quick start</h2></div><svg><use href="#ic-code"/></svg></div>
+        <label class="select-label" for="codeModel">Example model</label><select id="codeModel" disabled><option value="">No models available</option></select>
+        <div class="code-tabs" role="tablist" aria-label="Example language"><button id="tabCurl" class="code-tab selected" role="tab" aria-selected="true" aria-controls="codePanel" data-lang="curl">cURL</button><button id="tabPython" class="code-tab" role="tab" aria-selected="false" aria-controls="codePanel" tabindex="-1" data-lang="python">Python</button><button id="tabJs" class="code-tab" role="tab" aria-selected="false" aria-controls="codePanel" tabindex="-1" data-lang="javascript">JavaScript</button></div>
+        <div id="codePanel" class="code-panel" role="tabpanel" aria-labelledby="tabCurl" tabindex="0"><pre><code id="apiCode">Loading example…</code></pre></div>
+        <div class="code-footer"><span id="sdkHint">No extra libraries</span><button id="copyCode" class="text-button" disabled><svg><use href="#ic-copy"/></svg>Copy</button></div>
+        <p class="code-note">The key is read from <code>PREMIER_API_KEY</code>. Do not publish it in your application code.</p>
+      </section>
+    </div>
+    <section id="keys" class="keys-section" aria-labelledby="keysTitle">
+      <div class="section-heading"><div><h2 id="keysTitle">API keys <span id="keyCount" class="count-badge">—</span></h2><p>Up to 5 keys per account.</p></div><button class="button" data-create-key disabled><svg><use href="#ic-plus"/></svg>Create key</button></div>
+      <div class="panel keys-panel"><div id="apiKeysList" aria-live="polite"><div class="loading-state">Loading keys…</div></div></div>
+      <div class="security-note"><svg><use href="#ic-shield"/></svg><p>Only key hashes are stored. The full key is shown only when created. Do not share it with anyone.</p></div>
+    </section>
+    <footer class="page-footer"><span>Premier / Developer API</span><span>Text · Vision · Streaming</span></footer>
+  </main>
+</div>
+</div>
+<dialog id="createDialog" class="api-dialog" aria-labelledby="createTitle"><form id="apiKeyForm">
+  <div class="dialog-header"><span class="dialog-icon"><svg><use href="#ic-key"/></svg></span><button type="button" class="icon-button" data-close-dialog aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
+  <h2 id="createTitle">New API key</h2><p class="dialog-intro">Connect your application to Premier models.</p>
+  <label class="form-field">Key name<input id="apiKeyName" autofocus maxlength="60" required placeholder="For example, Telegram bot" autocomplete="off"></label>
+  <div class="form-field"><span class="field-caption">Models</span><label class="model-check"><input type="checkbox" id="apiKeyAllModels" checked>All models</label><div id="apiKeyModels" class="model-checks"></div></div>
+  <label class="form-field">Expiration<select id="apiKeyDays"><option value="30">30 days</option><option value="90">90 days</option><option value="365">365 days</option><option value="">No expiration</option></select></label>
+  <p class="form-hint">Use a name that helps you tell this key apart from the others.</p><p id="createError" class="form-error" role="alert"></p>
+  <div class="dialog-actions"><button type="button" class="button" data-close-dialog>Cancel</button><button id="apiCreateKey" class="button primary">Create key</button></div>
+</form></dialog>
+<dialog id="secretDialog" class="api-dialog" aria-labelledby="secretTitle"><div class="dialog-header"><span class="dialog-icon success"><svg><use href="#ic-check"/></svg></span><button class="icon-button" data-close-dialog aria-label="Close"><svg><use href="#ic-close"/></svg></button></div><span class="small-label">READY TO CONNECT</span><h2 id="secretTitle">Key created</h2><p class="dialog-intro">Save it now. After closing this window, the full key will no longer be available.</p><label class="form-field">Your secret API key<textarea id="apiSecretValue" readonly spellcheck="false" autocomplete="off" rows="3"></textarea></label><button class="button primary full-width" id="apiCopySecret" aria-live="polite"><svg><use href="#ic-copy"/></svg>Copy key</button><div class="secret-warning"><svg><use href="#ic-shield"/></svg><p>Keep the key in an environment variable on your server. Do not add it to client-side JavaScript.</p></div><div class="dialog-actions"><button class="button" id="apiHideSecret">I have saved the key</button></div></dialog>
+<dialog id="revokeDialog" class="api-dialog" aria-labelledby="revokeTitle"><div class="dialog-header"><span class="dialog-icon"><svg><use href="#ic-key"/></svg></span><button class="icon-button" data-close-dialog aria-label="Close"><svg><use href="#ic-close"/></svg></button></div><h2 id="revokeTitle">Revoke key?</h2><p class="dialog-intro">Applications using the key <strong id="revokeName"></strong> will lose API access. This action cannot be undone.</p><p id="revokeError" class="form-error" role="alert"></p><div class="dialog-actions"><button class="button" data-close-dialog>Cancel</button><button id="confirmRevoke" class="button danger">Revoke key</button></div></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

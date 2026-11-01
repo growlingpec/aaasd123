@@ -1,0 +1,7 @@
+[Unit]
+Description=Бэкап данных Premier
+
+[Service]
+Type=oneshot
+# для копии на другой сервер: Environment=BACKUP_REMOTE=user@host:/backups/premier
+ExecStart=/opt/premier/deploy/backup.sh

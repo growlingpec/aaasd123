@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Статус моделей — Premier</title>
+<link rel="icon" type="image/png" href="/icon-p-2.png">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0c;--card:#141415;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--text:#ededed;--muted:rgba(255,255,255,.6);--dim:rgba(255,255,255,.4);--ok:#6fd391;--bad:#f19a9a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.6 Onest,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:0;background:rgba(11,11,12,.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:5}
+header .wrap{height:60px;display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;color:var(--text);text-decoration:none}
+.mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(145deg,#f2f2f2,#9a9a9a);color:#111;display:grid;place-items:center;font-size:12px;font-weight:800}
+a{color:var(--muted);text-decoration:none;font-size:14px}
+a:hover{color:var(--text)}
+.sp{flex:1}
+main{padding:40px 0 80px}
+h1{font-size:26px;font-weight:650;margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.sum{margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:9px;padding:9px 15px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:14px;color:var(--muted)}
+.chip b{color:var(--text);font-weight:650}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.na{background:rgba(255,255,255,.25)}
+.m{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px 18px;margin-bottom:12px}
+.m-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.m-top b{font-size:15px}
+.m-top .st{font-size:13px;color:var(--muted)}
+.m-top .st.bad{color:var(--bad)}
+.sp2{flex:1}
+.up{font-size:13px;color:var(--muted);white-space:nowrap}
+.up b{color:var(--text);font-weight:650}
+.tl{display:flex;gap:2px;margin-top:14px}
+.tl i{flex:1;height:10px;border-radius:2px;background:rgba(255,255,255,.07)}
+.tl i.up{background:rgba(111,211,145,.75)}
+.tl i.down{background:rgba(241,154,154,.8)}
+.tl-l{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:5px}
+.tl i.down{cursor:help}
+.note{margin-top:28px;font-size:12.5px;color:var(--dim);line-height:1.65}
+@media(max-width:560px){.up{display:none}.m-top .st{width:100%}}
+</style>
+<style>.mark{background:transparent}</style>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="/"><span class="mark"><img src="/icon-p-2.png" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></span>Premier</a><span class="sp"></span><a href="/status">Модели</a><a href="/">На главную</a></div></header>
+<main class="wrap">
+<h1>Статус моделей</h1>
+<div class="sub" id="upd">Загружаем…</div>
+<div class="sum" id="sum"></div>
+<div id="list"><div class="m">Загружаем…</div></div>
+<div class="note">Данные — фоновые тестовые запросы к каждой модели каждые 20 минут (пинг). Полоска — последние 24 часа: зелёный сегмент — модель отвечала, красный — были ошибки, серый — данных пока нет. Аптайм считается по пингам за 24 часа. Страница обновляется автоматически раз в минуту.</div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtT = (v) => v ? new Date(v).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' }) : '';
+const fmtMs = (v) => v == null ? '—' : v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '').replace('.', ',') + 'с' : v + 'мс';
+const esc2 = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+async function load() {
+  let j;
+  try { const r = await fetch('/api/models/status'); j = await r.json(); if (!Array.isArray(j)) throw new Error('x'); }
+  catch { $('list').innerHTML = '<div class="m">Не удалось загрузить статус моделей</div>'; return; }
+  $('upd').textContent = 'Обновлено в ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' }) + ' · пинг каждые 20 минут';
+  const okN = j.filter((x) => x.probe && x.probe.ok).length;
+  $('sum').innerHTML = '<div class="chip"><span class="dot ' + (okN === j.length ? 'ok' : okN === 0 ? 'bad' : 'bad') + '"></span><b>' + okN + '</b> из ' + j.length + ' моделей работают' + (okN === j.length ? ' — всё в порядке' : ' — есть проблемы');
+  $('list').innerHTML = j.map((x) => {
+    const ok = x.probe && x.probe.ok;
+    const stTxt = x.probe ? (ok ? 'работает' : 'ошибка: ' + (x.probe.err || '—')) : 'нет данных — первый пинг в течение 20 минут';
+    const up = x.up24h && x.up24h.n ? 'аптайм 24ч: <b>' + x.up24h.pct + '%</b>' : 'аптайм: накопление…';
+    // причина ошибки показывается только при наведении на красный кубик
+    const now = Date.now();
+    const incs = x.incidents || [];
+    const tl = (x.timeline || []).map((v, i) => {
+      const cls = v === 1 ? 'up' : v === 2 ? 'down' : '';
+      if (v !== 2) return '<i class="' + cls + '"></i>';
+      const t0 = now - (47 - i) * 18e5, t1 = t0 + 18e5;
+      const hit = incs.find((z) => z.from <= t1 && (z.to == null || z.to >= t0));
+      const tip = fmtT(t0) + '–' + fmtT(t1) + (hit ? ' — ' + (hit.err || 'ошибка') : ' — ошибка');
+      return '<i class="' + cls + '" title="' + esc2(tip) + '"></i>';
+    }).join('');
+    return '<div class="m"><div class="m-top"><span class="dot ' + (x.probe ? (ok ? 'ok' : 'bad') : 'na') + '"></span><b>' + esc2(x.name) + '</b><span class="st ' + (x.probe && !ok ? 'bad' : '') + '">' + stTxt + '</span>' + (ok ? '<span class="st">· пинг ' + fmtMs(x.probe.ms) + ' в ' + fmtT(x.probe.at) + '</span>' : '') + '<span class="sp2"></span><span class="up">' + up + '</span></div><div class="tl">' + tl + '</div><div class="tl-l"><span>−24ч</span><span>−12ч</span><span>сейчас</span></div></div>';
+  }).join('');
+}
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>

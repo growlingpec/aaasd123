@@ -1,0 +1,16 @@
+{
+  "Войдите в аккаунт": "Sign in to your account",
+  "Отзыв уже оставлен": "You have already submitted a review",
+  "Отзыв с этим ником уже оставлен": "You have already submitted a review with this nickname",
+  "Слишком много попыток. Попробуйте через час": "Too many attempts. Please try again in an hour",
+  "Отправьте JSON-запрос с сайта": "Send a JSON request from the website",
+  "Некорректный отзыв": "Invalid review",
+  "Нужно согласие на публикацию": "Please consent to publication",
+  "Выберите оценку от 1 до 5": "Choose a rating from 1 to 5",
+  "Текст отзыва — от 20 до 2000 символов": "Review text must be 20–2000 characters",
+  "Ник — 2–24 символа: латиница, цифры, _, . и -": "Nickname must be 2–24 characters: letters A–Z, numbers, _, . and -",
+  "Ник уже занят": "This nickname is already taken",
+  "Некорректное действие с отзывом": "Invalid review action",
+  "Отзыв не найден": "Review not found",
+  "Метод не поддерживается": "Method not supported"
+}

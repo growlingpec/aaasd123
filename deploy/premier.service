@@ -1,0 +1,32 @@
+# systemd-сервис Premier: /etc/systemd/system/premier.service
+[Unit]
+Description=Premier — чат с ИИ-моделями
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=premier
+Group=premier
+WorkingDirectory=/opt/premier
+EnvironmentFile=/etc/premier/premier.env
+Environment=PUPPETEER_CACHE_DIR=/opt/premier/.cache/puppeteer
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/premier/server.js
+Restart=always
+RestartSec=3
+
+# Ограничения: сервис не может стать root и писать куда-то кроме своей папки
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/premier/data
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

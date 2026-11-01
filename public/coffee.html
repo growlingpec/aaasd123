@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кофейня «Утро» — кофе, который будит лучше будильника</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+<style>
+  :root {
+    --bg: #14100d;
+    --bg-soft: #1d1713;
+    --card: #241c16;
+    --line: rgba(212, 163, 115, .15);
+    --accent: #d4a373;
+    --accent-2: #b07d4f;
+    --text: #f2e9e0;
+    --muted: #a8988a;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+  .container { width: min(1140px, 90%); margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    transition: background .35s ease, box-shadow .35s ease;
+  }
+
+  header.scrolled {
+    background: rgba(20, 16, 13, .92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: .5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 34px;
+    list-style: none;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .95rem;
+    font-weight: 500;
+    transition: color .25s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #20140b !important;
+    padding: 12px 26px;
+    border-radius: 100px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: .95rem;
+    transition: transform .25s, box-shadow .25s, background .25s;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(212, 163, 115, .3);
+    background: #e2b586;
+  }
+
+  .burger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+  }
+
+  .burger span {
+    display: block;
+    width: 26px; height: 2px;
+    background: var(--text);
+    margin: 6px 0;
+    border-radius: 2px;
+    transition: transform .3s, opacity .3s;
+  }
+
+  .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .burger.open span:nth-child(2) { opacity: 0; }
+  .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    background:
+      radial-gradient(ellipse 60% 50% at 75% 30%, rgba(212, 163, 115, .12), transparent 60%),
+      radial-gradient(ellipse 40% 40% at 15% 80%, rgba(176, 125, 79, .08), transparent 60%),
+      var(--bg);
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 60px;
+    align-items: center;
+    padding: 120px 0 80px;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    color: var(--accent);
+    padding: 7px 16px;
+    border-radius: 100px;
+    font-size: .82rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+    line-height: 1.12;
+    font-weight: 800;
+    margin-bottom: 22px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 480px;
+    margin-bottom: 36px;
+  }
+
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text) !important;
+  }
+
+  .btn-outline:hover {
+    background: var(--card);
+    box-shadow: none;
+    border-color: var(--accent);
+  }
+
+  /* ---------- 3D cup ---------- */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  #cup3d {
+    width: min(460px, 100%);
+    height: min(480px, 60vh);
+    border-radius: 50%;
+    position: relative;
+  }
+
+  #cup3d canvas { display: block; border-radius: 50%; }
+
+  /* Эмодзи-чашка как запасной вариант, если WebGL недоступен */
+  .cup-fallback {
+    width: min(380px, 80%);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a2c20, #1d1713 70%);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(5rem, 12vw, 8.5rem);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, .5), inset 0 0 60px rgba(212, 163, 115, .06);
+    animation: float 5s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: 100px 0; }
+
+  .section-head { text-align: center; margin-bottom: 60px; }
+
+  .section-head .kicker {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+
+  .section-head h2 {
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin-top: 10px;
+  }
+
+  /* ---------- About ---------- */
+  .about { background: var(--bg-soft); }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+
+  .about-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 36px 30px;
+    transition: transform .3s, border-color .3s;
+  }
+
+  .about-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(212, 163, 115, .4);
+  }
+
+  .about-card .icon { font-size: 2.2rem; margin-bottom: 18px; }
+
+  .about-card h3 { font-size: 1.3rem; margin-bottom: 10px; }
+
+  .about-card p { color: var(--muted); font-size: .95rem; }
+
+  /* ---------- Menu ---------- */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+  }
+
+  .menu-item {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px 24px;
+    text-align: center;
+    transition: transform .3s, box-shadow .3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .menu-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(212, 163, 115, .12), transparent 70%);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+
+  .menu-item:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+  .menu-item:hover::before { opacity: 1; }
+
+  .menu-item .emoji { font-size: 3rem; display: block; margin-bottom: 16px; }
+
+  .menu-item h3 { font-size: 1.15rem; margin-bottom: 6px; }
+
+  .menu-item p {
+    color: var(--muted);
+    font-size: .85rem;
+    margin-bottom: 16px;
+    min-height: 42px;
+  }
+
+  .price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .badge {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: var(--accent);
+    color: #20140b;
+    font-size: .68rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- Contacts ---------- */
+  .contacts { background: var(--bg-soft); }
+
+  .contacts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+  }
+
+  .contacts h2 { font-size: clamp(1.9rem, 3.5vw, 2.6rem); margin-bottom: 18px; }
+
+  .contacts .lead { color: var(--muted); margin-bottom: 30px; }
+
+  .contact-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .contact-row .ic {
+    width: 44px; height: 44px;
+    flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .contact-row b { display: block; font-size: .95rem; }
+  .contact-row span { color: var(--muted); font-size: .9rem; }
+
+  .map-placeholder {
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 45%, rgba(212,163,115,.14), transparent 55%),
+      var(--card);
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+  }
+
+  .map-placeholder .pin { font-size: 3rem; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 34px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+
+  footer .logo { font-size: 1.25rem; display: inline-block; margin-bottom: 8px; }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 960px) {
+    .hero-inner { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+    .hero p { margin: 0 auto 36px; }
+    .hero-actions { justify-content: center; }
+    .hero-visual { order: -1; }
+    #cup3d { height: min(360px, 55vw); }
+    .about-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+    .menu-grid { grid-template-columns: repeat(2, 1fr); }
+    .contacts-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .burger { display: block; z-index: 110; }
+
+    .nav-links {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 16, 13, .97);
+      backdrop-filter: blur(14px);
+      flex-direction: column;
+      justify-content: center;
+      gap: 30px;
+      transform: translateY(-100%);
+      transition: transform .4s ease;
+    }
+
+    .nav-links.open { transform: translateY(0); }
+    .nav-links a { font-size: 1.3rem; }
+    .menu-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
+    section { padding: 70px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div class="container nav">
+    <a href="#" class="logo">Утро<span>.</span></a>
+    <button class="burger" id="burger" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#about">О нас</a></li>
+      <li><a href="#menu">Меню</a></li>
+      <li><a href="#contacts">Контакты</a></li>
+      <li><a href="#contacts" class="btn">Заказать столик</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <div class="hero-tag">☕ Кофейня в центре города</div>
+        <h1>Кофе, который будит <em>лучше будильника</em></h1>
+        <p>Зерно свежей обжарки, бариста, которые знают ваш заказ наизусть, и атмосфера, в которую хочется возвращаться.</p>
+        <div class="hero-actions">
+          <a href="#menu" class="btn">Смотреть меню</a>
+          <a href="#contacts" class="btn btn-outline">Как нас найти</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div id="cup3d"></div>
+        <div class="cup-fallback" id="cupFallback">☕</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about" id="about">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Почему мы</div>
+        <h2>Три причины заглянуть</h2>
+      </div>
+      <div class="about-grid">
+        <div class="about-card reveal">
+          <div class="icon">🌱</div>
+          <h3>Свежее зерно</h3>
+          <p>Обжариваем зерно каждую неделю у локальных обжарщиков. Никакого «вчерашнего» кофе.</p>
+        </div>
+        <div class="about-card reveal">
+          <div class="icon">🥐</div>
+          <h3>Своя выпечка</h3>
+          <p>Круассаны, синнабоны и тарталетки готовим сами — с четырёх утра, к вашему приходу.</p>
+        </div>
+        <div class="about-card reveal">
+          <div class="icon">💻</div>
+          <h3>Можно поработать</h3>
+          <p>Быстрый Wi-Fi, розетки у каждого столика и никто не будет торопить вас уйти.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Menu -->
+  <section id="menu">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Меню</div>
+        <h2>Наши фавориты</h2>
+      </div>
+      <div class="menu-grid">
+        <div class="menu-item reveal">
+          <span class="emoji">☕</span>
+          <h3>Эспрессо</h3>
+          <p>Классика из 100% арабики, плотная пенка</p>
+          <div class="price">150 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <div class="badge">Хит</div>
+          <span class="emoji">🥛</span>
+          <h3>Капучино</h3>
+          <p>Бархатная молочная пена, можно на овсяном</p>
+          <div class="price">220 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <span class="emoji">🍮</span>
+          <h3>Раф «Утренний»</h3>
+          <p>С карамелью и щепоткой морской соли</p>
+          <div class="price">280 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <span class="emoji">🧊</span>
+          <h3>Холодный латте</h3>
+          <p>Освежающий, с двойной порцией эспрессо</p>
+          <div class="price">250 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <span class="emoji">🍵</span>
+          <h3>Матча латте</h3>
+          <p>Церемониальная матча и нежное молоко</p>
+          <div class="price">290 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <span class="emoji">🥐</span>
+          <h3>Круассан</h3>
+          <p>Слоёный, с миндальным кремом</p>
+          <div class="price">180 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <div class="badge">Новинка</div>
+          <span class="emoji">🍰</span>
+          <h3>Чизкейк</h3>
+          <p>Солёная карамель и песочная основа</p>
+          <div class="price">240 ₽</div>
+        </div>
+        <div class="menu-item reveal">
+          <span class="emoji">🍫</span>
+          <h3>Какао</h3>
+          <p>Бельгийский шоколад, маршмеллоу сверху</p>
+          <div class="price">210 ₽</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contacts -->
+  <section class="contacts" id="contacts">
+    <div class="container contacts-grid">
+      <div class="reveal">
+        <div class="kicker" style="color:var(--accent);text-transform:uppercase;letter-spacing:2.5px;font-size:.8rem;font-weight:600;">Контакты</div>
+        <h2>Ждём вас каждый день</h2>
+        <p class="lead">Заглядывайте на чашечку перед работой или оставайтесь на весь день — мы всегда рады.</p>
+        <div class="contact-row">
+          <div class="ic">📍</div>
+          <div><b>Адрес</b><span>ул. Рассветная, 12, вход с угла</span></div>
+        </div>
+        <div class="contact-row">
+          <div class="ic">🕗</div>
+          <div><b>Часы работы</b><span>Пн–Пт: 7:30–21:00 · Сб–Вс: 9:00–22:00</span></div>
+        </div>
+        <div class="contact-row">
+          <div class="ic">📞</div>
+          <div><b>Телефон</b><span>+7 (900) 123-45-67</span></div>
+        </div>
+        <div class="contact-row">
+          <div class="ic">✉️</div>
+          <div><b>Почта</b><span>hello@utro.coffee</span></div>
+        </div>
+      </div>
+      <div class="map-placeholder reveal">
+        <div class="pin">📍</div>
+        <div>Здесь будет карта</div>
+        <div style="font-size:.8rem;">ул. Рассветная, 12</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <a href="#" class="logo">Утро<span>.</span></a>
+    <div>© 2026 Кофейня «Утро». Сделано с любовью и кофеином ☕</div>
+  </div>
+</footer>
+
+<script>
+  // ---------- Шапка и меню ----------
+  const header = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 30);
+  });
+
+  const burger = document.getElementById('burger');
+  const navLinks = document.getElementById('navLinks');
+
+  burger.addEventListener('click', () => {
+    burger.classList.toggle('open');
+    navLinks.classList.toggle('open');
+  });
+
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      burger.classList.remove('open');
+      navLinks.classList.remove('open');
+    });
+  });
+
+  // ---------- Плавное появление блоков ----------
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ---------- 3D-чашка на Three.js ----------
+  (function initCup() {
+    if (!window.THREE) return; // WebGL/CDN недоступен — останется эмодзи
+
+    const container = document.getElementById('cup3d');
+    const fallback = document.getElementById('cupFallback');
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      return; // браузер без WebGL — показываем эмодзи
+    }
+
+    fallback.style.display = 'none';
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      38, container.clientWidth / container.clientHeight, 0.1, 100
+    );
+    camera.position.set(0, 1.9, 5.4);
+    camera.lookAt(0, 0.75, 0);
+
+    // --- Свет ---
+    scene.add(new THREE.AmbientLight(0xffe8d6, 0.55));
+
+    const keyLight = new THREE.DirectionalLight(0xffe0be, 1.15);
+    keyLight.position.set(3, 5, 4);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xd4a373, 0.6);
+    rimLight.position.set(-4, 2, -3);
+    scene.add(rimLight);
+
+    const glow = new THREE.PointLight(0xb07d4f, 0.8, 12);
+    glow.position.set(0, -1.5, 2);
+    scene.add(glow);
+
+    // --- Материалы ---
+    const ceramic = new THREE.MeshPhysicalMaterial({
+      color: 0xf0e4d3,
+      roughness: 0.3,
+      metalness: 0.05,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.35,
+      side: THREE.DoubleSide
+    });
+
+    const coffeeMat = new THREE.MeshStandardMaterial({
+      color: 0x2e1a0e,
+      roughness: 0.12,
+      metalness: 0.1
+    });
+
+    const cupGroup = new THREE.Group();
+    scene.add(cupGroup);
+
+    // --- Чашка (тело вращения) ---
+    const cupProfile = [
+      new THREE.Vector2(0.00, 0.02),
+      new THREE.Vector2(0.42, 0.02),
+      new THREE.Vector2(0.52, 0.06),
+      new THREE.Vector2(0.60, 0.18),
+      new THREE.Vector2(0.72, 0.55),
+      new THREE.Vector2(0.82, 0.95),
+      new THREE.Vector2(0.85, 1.05),   // внешний край
+      new THREE.Vector2(0.80, 1.05),   // кромка
+      new THREE.Vector2(0.75, 0.92),   // внутренняя стенка
+      new THREE.Vector2(0.62, 0.45),
+      new THREE.Vector2(0.50, 0.22),
+      new THREE.Vector2(0.00, 0.18)    // внутреннее дно
+    ];
+    const cup = new THREE.Mesh(new THREE.LatheGeometry(cupProfile, 80), ceramic);
+    cup.position.y = 0.06;
+    cupGroup.add(cup);
+
+    // --- Кофе ---
+    const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.72, 64), coffeeMat);
+    coffee.rotation.x = -Math.PI / 2;
+    coffee.position.y = 0.9;
+    cupGroup.add(coffee);
+
+    // --- Ручка ---
+    const handle = new THREE.Mesh(
+      new THREE.TorusGeometry(0.32, 0.085, 20, 48, Math.PI),
+      ceramic
+    );
+    handle.rotation.z = -Math.PI / 2;
+    handle.position.set(0.66, 0.6, 0);
+    cupGroup.add(handle);
+
+    // --- Блюдце ---
+    const saucerProfile = [
+      new THREE.Vector2(0.00, -0.06),
+      new THREE.Vector2(1.15, -0.06),
+      new THREE.Vector2(1.34, 0.00),
+      new THREE.Vector2(1.36, 0.05),
+      new THREE.Vector2(1.24, 0.07),
+      new THREE.Vector2(0.85, 0.02),
+      new THREE.Vector2(0.00, 0.0)
+    ];
+    const saucer = new THREE.Mesh(new THREE.LatheGeometry(saucerProfile, 80), ceramic);
+    cupGroup.add(saucer);
+
+    // --- Мягкая тень ---
+    function radialTexture(rgbaInner, rgbaOuter) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+      g.addColorStop(0, rgbaInner);
+      g.addColorStop(1, rgbaOuter);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(1.9, 48),
+      new THREE.MeshBasicMaterial({
+        map: radialTexture('rgba(0,0,0,.55)', 'rgba(0,0,0,0)'),
+        transparent: true,
+        depthWrite: false
+      })
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = -0.12;
+    cupGroup.add(shadow);
+
+    // --- Пар ---
+    const steamTexture = radialTexture('rgba(255,255,255,.85)', 'rgba(255,255,255,0)');
+    const steamParticles = [];
+
+    for (let i = 0; i < 22; i++) {
+      const mat = new THREE.SpriteMaterial({
+        map: steamTexture,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      });
+      const sprite = new THREE.Sprite(mat);
+      const life = Math.random(); // 0..1 — фаза жизни частицы
+      sprite.userData = {
+        life,
+        speed: 0.15 + Math.random() * 0.12,
+        drift: (Math.random() - 0.5) * 0.4,
+        wobble: Math.random() * Math.PI * 2
+      };
+      cupGroup.add(sprite);
+      steamParticles.push(sprite);
+    }
+
+    // --- Взаимодействие с мышью ---
+    let targetRotY = 0, targetRotX = 0;
+    let extraRotY = 0, extraRotX = 0;
+
+    window.addEventListener('mousemove', e => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;
+      targetRotY = nx * 0.5;
+      targetRotX = ny * 0.2;
+    });
+
+    // --- Анимация ---
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+      const t = clock.elapsedTime;
+
+      // плавный доворот за мышью + медленное авторовращение
+      extraRotY += (targetRotY - extraRotY) * 0.05;
+      extraRotX += (targetRotX - extraRotX) * 0.05;
+      cupGroup.rotation.y += dt * 0.45;
+      cupGroup.rotation.y += (extraRotY - 0) * dt * 0; // базовый поворот выше
+      cupGroup.rotation.x = extraRotX;
+      cupGroup.position.y = Math.sin(t * 1.2) * 0.07; // лёгкое парение
+
+      // пар
+      steamParticles.forEach(s => {
+        s.userData.life += dt * s.userData.speed;
+        if (s.userData.life > 1) {
+          s.userData.life = 0;
+          s.userData.drift = (Math.random() - 0.5) * 0.4;
+        }
+        const l = s.userData.life;
+        const y = 1.0 + l * 1.5;
+        const x = s.userData.drift * l + Math.sin(t * 2 + s.userData.wobble) * 0.06;
+        s.position.set(x, y, 0);
+        const scale = 0.25 + l * 0.55;
+        s.scale.set(scale, scale, 1);
+        s.material.opacity = Math.sin(l * Math.PI) * 0.35;
+      });
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- Адаптив ---
+    window.addEventListener('resize', () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+/* Сгенерировано scripts/build-theme.py из login.html — не править вручную. */
+:root{--bg:var(--p-bg);--card:var(--p-bg);--line:color-mix(in srgb,var(--p-text) 8%,transparent);--line2:color-mix(in srgb,var(--p-text) 14%,transparent);--muted:color-mix(in srgb,var(--p-text) 60%,transparent);--dim:color-mix(in srgb,var(--p-text) 40%,transparent)}
+body{background:var(--bg) radial-gradient(800px 480px at 50% 20%,color-mix(in srgb,var(--p-text) 5%,transparent),transparent 70%) no-repeat;font:15px/1.5 var(--p-font)}
+:focus-visible{outline:2px solid var(--p-accent)}
+.mark{background:linear-gradient(145deg,#f2f2f2,var(--p-line-2));color:var(--p-text)}
+.tabs{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.tabs i{background:color-mix(in srgb,var(--p-text) 9%,transparent)}
+input{background:var(--p-bg)}
+input:focus{border-color:var(--p-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--p-accent) 18%,transparent)}
+.btn{background:var(--p-accent);color:var(--p-on-accent)}
+.btn:hover{background:var(--p-accent)}
+.err{color:var(--p-bad)}
+input::placeholder{color:color-mix(in srgb,var(--p-text) 30%,transparent)}
+input.bad{border-color:var(--p-bad)}
+input.bad:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--p-bad) 18%,transparent)}
+.ferr{color:var(--p-bad)}
+.eye{color:color-mix(in srgb,var(--p-text) 45%,transparent)}
+.eye:hover{color:color-mix(in srgb,var(--p-text) 85%,transparent)}
+.gbtn{background:var(--p-text);color:var(--p-bg)}
+.gbtn:hover{background:var(--p-accent)}
+.ghbtn{background:var(--p-surface-2);color:var(--p-text);border-color:var(--p-line-2)}
+.ghbtn:hover{background:var(--p-line-2)}
+.pitch h2 span{background:linear-gradient(90deg,var(--p-accent),var(--p-accent));-webkit-background-clip:text;background-clip:text}
+.pitch li i{color:var(--p-accent-ink)}
+.card{box-shadow:0 30px 80px color-mix(in srgb,var(--p-shadow-c) calc(45% * var(--p-shadow-k)),transparent)}
+.card .err.info{background:color-mix(in srgb,var(--p-warn) 8%,transparent);border:1px solid color-mix(in srgb,var(--p-warn) 25%,transparent);color:var(--p-warn)}
+.gbtn.off{background:color-mix(in srgb,var(--p-text) 6%,transparent)}
+.gbtn.off:hover{background:color-mix(in srgb,var(--p-text) 6%,transparent)}

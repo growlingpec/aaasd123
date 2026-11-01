@@ -1,0 +1,45 @@
+/* Сгенерировано scripts/build-theme.py из panel.html — не править вручную. */
+:root{--bg:var(--p-bg);--side:var(--p-sunken);--card:var(--p-bg);--card2:var(--p-surface);--hover:var(--p-surface);--line:color-mix(in srgb,var(--p-text) 7%,transparent);--line2:color-mix(in srgb,var(--p-text) 13%,transparent);--muted:color-mix(in srgb,var(--p-text) 58%,transparent);--dim:color-mix(in srgb,var(--p-text) 36%,transparent);--ok:var(--p-ok);--warn:var(--p-warn);--bad:var(--p-bad)}
+body{font:14.5px/1.55 var(--p-font)}
+:focus-visible{outline:2px solid color-mix(in srgb,var(--p-text) 45%,transparent)}
+::selection{background:color-mix(in srgb,var(--p-text) 22%,transparent)}
+.mark{background:linear-gradient(145deg,#f2f2f2,var(--p-line-2));color:var(--p-text)}
+.login{background:radial-gradient(700px 420px at 50% 30%,color-mix(in srgb,var(--p-text) 5%,transparent),transparent 70%)}
+.lcard{box-shadow:0 30px 80px color-mix(in srgb,var(--p-shadow-c) calc(50% * var(--p-shadow-k)),transparent)}
+.top{background:color-mix(in srgb,var(--p-bg) 82%,transparent)}
+@media (max-width:900px){
+.nav{box-shadow:20px 0 60px color-mix(in srgb,var(--p-shadow-c) calc(50% * var(--p-shadow-k)),transparent)}
+}
+.inp,.field input,.field select{background:var(--p-bg)}
+.inp:focus,.field input:focus,.field select:focus{border-color:color-mix(in srgb,var(--p-text) 30%,transparent)}
+.btn.pri{background:var(--p-text);color:var(--p-bg);border-color:var(--p-text)}
+.btn.danger:hover{border-color:color-mix(in srgb,var(--p-bad) 40%,transparent)}
+.badge{background:color-mix(in srgb,var(--p-text) 8%,transparent)}
+.badge.ok{background:color-mix(in srgb,var(--p-ok) 13%,transparent)}
+.badge.warn{background:color-mix(in srgb,var(--p-warn) 13%,transparent)}
+.badge.bad{background:color-mix(in srgb,var(--p-bad) 13%,transparent)}
+.badge.p1{background:color-mix(in srgb,var(--p-ok) 13%,transparent)}
+.badge.p2{background:color-mix(in srgb,var(--p-warn) 13%,transparent)}
+.chart i{background:linear-gradient(180deg,color-mix(in srgb,var(--p-text) 34%,transparent),color-mix(in srgb,var(--p-text) 12%,transparent))}
+.chart .col:hover i{background:color-mix(in srgb,var(--p-text) 55%,transparent)}
+.model.def{border-color:color-mix(in srgb,var(--p-text) 26%,transparent)}
+.chip.on{background:var(--p-text);color:var(--p-bg);border-color:var(--p-text)}
+.weight input{background:var(--p-bg)}
+.preset:hover{border-color:color-mix(in srgb,var(--p-text) 25%,transparent)}
+.plan.hot{border-color:color-mix(in srgb,var(--p-text) 24%,transparent)}
+tbody tr:hover{background:color-mix(in srgb,var(--p-text) 2%,transparent)}
+.av{background:var(--p-surface-2)}
+.grant select,.grant input[type=number]{background:var(--p-bg)}
+.toast{background:var(--p-text);color:var(--p-bg)}
+.overlay{background:color-mix(in srgb,var(--p-scrim-c) 50%,transparent)}
+.imp-row.on{background:color-mix(in srgb,var(--p-accent) 8%,transparent)}
+.imp-ck input{accent-color:var(--p-accent)}
+.imp-name{background:var(--p-bg)}
+.imp-name:focus{border-color:var(--p-accent)}
+.mprompt textarea{background:var(--p-bg)}
+.mprompt textarea:focus{border-color:var(--p-accent)}
+.pm-row input{accent-color:var(--p-accent)}
+.preply{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.preply.err{color:var(--p-bad)}
+.preply.ok{border-color:color-mix(in srgb,var(--p-ok) 30%,transparent)}
+.errs details{border-top:1px solid color-mix(in srgb,var(--p-text) 7%,transparent)}

@@ -1,0 +1,67 @@
+/* Сгенерировано scripts/build-theme.py из developers.css — не править вручную. */
+:root{--bg:var(--p-bg);--sidebar:var(--p-sunken);--surface:var(--p-bg);--raised:var(--p-surface);--line:var(--p-line-2);--muted:var(--p-line-2);--dim:var(--p-line-2);--blue:var(--p-accent);--blue-light:var(--p-accent);--green:var(--p-ok)}
+body{font:15px/1.55 var(--p-font)}
+::selection{background:var(--p-accent);color:var(--p-text)}
+.brand-mark{background:var(--p-text);color:var(--p-bg)}
+.brand-tag{border:1px solid var(--p-line-2)}
+.nav-item:hover{background:var(--p-surface);color:var(--p-text)}
+.nav-item.active{background:var(--p-surface);color:var(--p-text)}
+.plan-progress{background:var(--p-surface-2)}
+.plan-progress span{background:var(--p-accent)}
+.back-link:hover{color:var(--p-text)}
+.breadcrumb span{color:var(--p-text)}
+.breadcrumb svg{color:var(--p-dim)}
+.user-chip{color:var(--p-text)}
+.avatar{background:var(--p-surface-2);border:1px solid var(--p-line-2);color:var(--p-accent-ink)}
+.button{border:1px solid var(--p-line-2);background:var(--p-surface)}
+.button:hover{background:var(--p-surface-2)}
+.button.primary{border-color:var(--p-accent);color:var(--p-text)}
+.button.primary:hover{background:var(--p-accent)}
+.button.danger{background:var(--p-bad);border-color:var(--p-bad);color:var(--p-text)}
+.button.danger:hover{background:var(--p-bad)}
+.icon-box{border:1px solid var(--p-line-2);background:var(--p-surface);color:var(--p-muted)}
+.icon-button:hover{background:var(--p-surface-2);color:var(--p-accent-ink)}
+.protocol-badge{color:var(--p-muted);border:1px solid var(--p-line-2)}
+.count-badge{background:var(--p-surface-2);border:1px solid var(--p-line-2);color:var(--p-muted)}
+.model-card:hover{border-color:var(--p-line-2)}
+.model-glyph{border:1px solid var(--p-line-2);color:var(--p-accent-ink);background:var(--p-surface)}
+.vision-tag{border:1px solid var(--p-line-2);color:var(--p-ok)}
+.model-id code{color:var(--p-text)}
+.model-cost b{color:var(--p-text)}
+select{border:1px solid var(--p-line-2);background:var(--p-surface)}
+.code-tab.selected{color:var(--p-accent-ink)}
+.code-tab.selected:after{background:var(--p-accent)}
+.code-panel{background:var(--p-bg)}
+.code-panel code{color:var(--p-accent-ink)}
+.syntax-string{color:var(--p-ok)}
+.syntax-comment{color:var(--p-dim)}
+.text-button{color:var(--p-accent-ink)}
+.text-button:hover{background:var(--p-surface-2)}
+.code-note code{color:var(--p-muted)}
+.keys-head{background:var(--p-surface)}
+.key-prefix{color:var(--p-muted)}
+.key-date small{color:var(--p-muted)}
+.revoke-button{color:var(--p-muted)}
+.revoke-button:hover{background:color-mix(in srgb,var(--p-bad) 14%,var(--p-surface));color:var(--p-bad)}
+.expired-label{color:var(--p-warn)}
+.empty-icon{border:1px solid var(--p-line-2);background:var(--p-surface-2);color:var(--p-muted)}
+.page-error{border:1px solid var(--p-bad);background:color-mix(in srgb,var(--p-bad) 14%,var(--p-surface));color:var(--p-bad)}
+.api-dialog{border:1px solid var(--p-line-2);background:var(--p-surface);box-shadow:0 24px 80px color-mix(in srgb,var(--p-shadow-c) calc(53.3% * var(--p-shadow-k)),transparent)}
+.api-dialog::backdrop{background:color-mix(in srgb,var(--p-scrim-c) 66.7%,transparent)}
+.dialog-icon{border:1px solid var(--p-line-2);background:var(--p-surface-2);color:var(--p-muted)}
+.dialog-icon.success{border-color:var(--p-ok);background:color-mix(in srgb,var(--p-ok) 14%,var(--p-surface))}
+.dialog-intro strong{color:var(--p-accent-ink)}
+.form-field input,.form-field textarea{border:1px solid var(--p-line-2);background:var(--p-bg)}
+.form-field input::placeholder{color:var(--p-muted)}
+.form-error{color:var(--p-bad)}
+.secret-warning{background:var(--p-surface-2);border:1px solid var(--p-line-2)}
+.secret-warning svg{color:var(--p-muted)}
+.toast{border:1px solid var(--p-line-2);background:var(--p-surface-2);color:var(--p-text);box-shadow:0 8px 30px color-mix(in srgb,var(--p-shadow-c) calc(33.3% * var(--p-shadow-k)),transparent)}
+select,.form-field input,.form-field textarea{border-color:var(--p-line-2)}
+.button:not(.primary):not(.danger){border-color:var(--p-line-2)}
+.icon-button:hover{color:var(--p-text)}
+.model-checks{border:1px solid var(--p-line-2);background:var(--p-bg)}
+.model-checks .model-check{border-bottom:1px solid var(--p-line-2)}
+.model-check .mid{color:var(--p-dim)}
+.key-models{background:var(--p-surface-2)}
+.key-models.all{background:color-mix(in srgb,var(--p-accent) 14%,var(--p-surface));border-color:var(--p-accent)}

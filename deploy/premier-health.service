@@ -1,0 +1,6 @@
+[Unit]
+Description=Проверка, что Premier отвечает
+
+[Service]
+Type=oneshot
+ExecStart=/opt/premier/deploy/healthcheck.sh

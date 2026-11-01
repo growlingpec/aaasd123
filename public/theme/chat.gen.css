@@ -1,0 +1,156 @@
+/* Сгенерировано scripts/build-theme.py из chat.html — не править вручную. */
+.refcard{background:linear-gradient(160deg,color-mix(in srgb,var(--p-accent) 16%,transparent),color-mix(in srgb,var(--p-text) 2%,transparent) 46%);border:1px solid color-mix(in srgb,var(--p-accent) 38%,transparent)}
+.refcard::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--p-accent) 25%,transparent),transparent)}
+.rc-ic{color:var(--p-on-accent)}
+.rc-link code{font-family:var(--p-font-mono)}
+.rc-stat{background:color-mix(in srgb,var(--p-text) 3%,transparent)}
+.mst-row{background:color-mix(in srgb,var(--p-text) 2%,transparent)}
+.mst-dot.ok{background:var(--p-ok)}
+.mst-dot.bad{background:var(--p-bad)}
+.rc-tier.done .rc-n{color:var(--p-on-accent)}
+.rc-chip{border:1px solid color-mix(in srgb,var(--p-accent) 30%,transparent)}
+:root{--bg:var(--p-bg);--side:var(--p-sunken);--raised:var(--p-surface);--hover:var(--p-surface);--line:color-mix(in srgb,var(--p-text) 7%,transparent);--line2:color-mix(in srgb,var(--p-text) 13%,transparent);--muted:color-mix(in srgb,var(--p-text) 56%,transparent);--dim:color-mix(in srgb,var(--p-text) 36%,transparent);--code:var(--p-bg);--accent:var(--p-accent);--accent-h:var(--p-accent);--accent-l:var(--p-accent);--accent-t:color-mix(in srgb,var(--p-accent) 12%,transparent)}
+::selection{background:color-mix(in srgb,var(--p-text) 22%,transparent)}
+body{font:15.5px/1.65 var(--p-font)}
+.mark{background:linear-gradient(145deg,#f2f2f2,var(--p-line-2));color:var(--p-text)}
+.tgcard{background:color-mix(in srgb,var(--p-text) 3%,transparent)}
+.tgic{background:color-mix(in srgb,var(--p-accent) 14%,transparent);color:var(--p-accent-ink)}
+.tgsub{color:var(--p-on-accent)}
+.av{background:var(--p-surface-2)}
+.menu{background:var(--p-surface);box-shadow:0 16px 40px color-mix(in srgb,var(--p-shadow-c) calc(50% * var(--p-shadow-k)),transparent)}
+.tbl th{background:color-mix(in srgb,var(--p-text) 3%,transparent)}
+.md code{font:13.5px/1.5 var(--p-font-mono)}
+.pre pre{font:13.5px/1.6 var(--p-font-mono)}
+.box{background:var(--p-bg)}
+.box:focus-within{border-color:color-mix(in srgb,var(--p-text) 24%,transparent)}
+.send{color:var(--p-on-accent)}
+.send:disabled{background:var(--p-surface-2)}
+.send.stop{background:var(--p-surface-2)}
+.modal{background:color-mix(in srgb,var(--p-scrim-c) 60%,transparent)}
+.dlg{background:var(--p-surface);box-shadow:0 24px 60px color-mix(in srgb,var(--p-shadow-c) calc(60% * var(--p-shadow-k)),transparent)}
+.field input{background:var(--p-bg)}
+.field input:focus{border-color:color-mix(in srgb,var(--p-text) 30%,transparent)}
+.btn.pri{color:var(--p-on-accent)}
+.msgline.err{color:var(--p-bad)}
+.msgline.ok{color:var(--p-ok)}
+.errbox{border:1px solid color-mix(in srgb,var(--p-bad) 35%,transparent);background:color-mix(in srgb,var(--p-bad) 8%,transparent);color:var(--p-bad)}
+.pane{background:var(--p-bg)}
+.tabs{background:var(--p-surface)}
+.pbody pre{font:13px/1.6 var(--p-font-mono);color:var(--p-text)}
+.pwait{background:var(--p-bg)}
+.pack{background:var(--p-bg)}
+.fileb .fp{font-family:var(--p-font-mono)}
+.art{background:var(--p-bg)}
+.art.cur{border-color:color-mix(in srgb,var(--p-text) 30%,transparent)}
+.att{background:var(--p-surface)}
+.att .rm{background:color-mix(in srgb,var(--p-bg) 85%,transparent)}
+.box.drag{border-color:color-mix(in srgb,var(--p-text) 40%,transparent);background:var(--p-surface)}
+.field textarea{background:var(--p-bg)}
+.field textarea:focus{border-color:color-mix(in srgb,var(--p-text) 30%,transparent)}
+.btn.danger{color:var(--p-bad);border-color:color-mix(in srgb,var(--p-bad) 35%,transparent)}
+.btn.danger:hover{background:color-mix(in srgb,var(--p-bad) 10%,transparent)}
+.toast{background:var(--p-surface)}
+.run summary .bad{color:var(--p-bad)}
+.run .outp{font:12.5px/1.5 var(--p-font-mono)}
+.run .outp.err{color:var(--p-bad)}
+.outs .ofile{background:var(--p-bg)}
+.gen{background:var(--p-bg)}
+.gen-dl{background:color-mix(in srgb,var(--p-bg) 62%,transparent);color:var(--p-text)}
+.gen.vid video{background:var(--p-sunken)}
+.gen.draw{background:var(--p-bg)}
+.dblobs i:nth-child(1){background:var(--p-accent)}
+.dgrain{background:repeating-linear-gradient(115deg,color-mix(in srgb,var(--p-text) 0%,transparent) 0 14px,color-mix(in srgb,var(--p-text) 5%,transparent) 14px 15px),radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--p-scrim-c) 0%,transparent) 30%,color-mix(in srgb,var(--p-bg) 60%,transparent) 100%)}
+.dpen{background:color-mix(in srgb,var(--p-accent) 55%,transparent);border:1px solid color-mix(in srgb,var(--p-text) 14%,transparent)}
+.gen.draw figcaption{background:color-mix(in srgb,var(--p-accent) 60%,transparent);border:1px solid color-mix(in srgb,var(--p-text) 10%,transparent)}
+.gen.draw figcaption b{color:var(--p-text)}
+.gen.draw figcaption span{color:color-mix(in srgb,var(--p-text) 70%,transparent)}
+.dbar{background:color-mix(in srgb,var(--p-text) 12%,transparent)}
+.dbar i{background:linear-gradient(90deg,var(--p-accent),#8a5cf6)}
+.gen.draw small{color:color-mix(in srgb,var(--p-text) 55%,transparent)}
+.gen.wait{background:linear-gradient(110deg,var(--p-bg) 30%,var(--p-surface) 50%,var(--p-bg) 70%);background-size:250% 100%}
+.pickchip{border:1px solid color-mix(in srgb,var(--p-accent) 35%,transparent);background:color-mix(in srgb,var(--p-accent) 8%,transparent);color:var(--p-accent-ink)}
+.pickchip button:hover{background:color-mix(in srgb,var(--p-text) 8%,transparent)}
+.upick{color:var(--p-accent-ink);border:1px solid color-mix(in srgb,var(--p-accent) 30%,transparent)}
+#pPick.on,#micBtn.on{background:color-mix(in srgb,var(--p-accent) 12%,transparent)}
+.plancard{background:color-mix(in srgb,var(--p-text) 2%,transparent)}
+.pc-badge{background:color-mix(in srgb,var(--p-text) 8%,transparent)}
+.pc-up{color:var(--p-on-accent)}
+.pc-bar{background:color-mix(in srgb,var(--p-text) 8%,transparent)}
+.pc-bar.low i{background:var(--p-warn)}
+.pc-bar.out i{background:var(--p-bad)}
+.lockt{background:color-mix(in srgb,var(--p-warn) 14%,transparent);color:var(--p-warn)}
+.seg{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.seg button[aria-checked=true]{background:color-mix(in srgb,var(--p-text) 10%,transparent)}
+#payMsg a{color:var(--p-accent-ink)}
+.plan{background:var(--p-bg)}
+.plan.hot{border-color:color-mix(in srgb,var(--p-accent) 55%,transparent);background:linear-gradient(180deg,var(--accent-t),transparent 60%),var(--p-surface)}
+.plan .tag{color:var(--p-on-accent)}
+.plan li svg{color:var(--p-ok)}
+.reason{background:color-mix(in srgb,var(--p-warn) 8%,transparent);border:1px solid color-mix(in srgb,var(--p-warn) 25%,transparent);color:var(--p-warn)}
+.promo input{background:var(--p-bg)}
+.mini{background:var(--p-bg)}
+.ptag{background:color-mix(in srgb,var(--p-text) 8%,transparent)}
+.ptag.t1{background:color-mix(in srgb,var(--p-ok) 14%,transparent);color:var(--p-ok)}
+.ptag.t2{background:color-mix(in srgb,var(--p-warn) 14%,transparent);color:var(--p-warn)}
+.ptable input{background:var(--p-bg)}
+.st-ok{color:var(--p-ok)}
+.st-wait{color:var(--p-warn)}
+.st-bad{color:var(--p-bad)}
+.bars i{background:color-mix(in srgb,var(--p-text) 16%,transparent)}
+.bars i:hover{background:color-mix(in srgb,var(--p-text) 40%,transparent)}
+.acc-nav button:hover{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.acc-nav button.on{background:color-mix(in srgb,var(--p-text) 9%,transparent)}
+.acc-hero{background:linear-gradient(135deg,color-mix(in srgb,var(--p-text) 5%,transparent),color-mix(in srgb,var(--p-text) 1%,transparent))}
+.acc-av{color:var(--p-text);background:linear-gradient(145deg,#f2f2f2,var(--p-line-2))}
+.acc-note svg{color:var(--p-ok)}
+.acc-plan{background:linear-gradient(135deg,color-mix(in srgb,var(--p-text) 6%,transparent),color-mix(in srgb,var(--p-text) 1%,transparent))}
+.danger{border:1px solid color-mix(in srgb,var(--p-bad) 28%,transparent);background:color-mix(in srgb,var(--p-bad) 4%,transparent)}
+.danger .acc-row b{color:var(--p-bad)}
+.btn.dangerb{color:var(--p-bad);border-color:color-mix(in srgb,var(--p-bad) 40%,transparent)}
+.btn.dangerb:hover{background:color-mix(in srgb,var(--p-bad) 10%,transparent)}
+.btn.dangerb.solid{background:var(--p-bad);color:var(--p-text);border-color:var(--p-bad)}
+.btn.dangerb.solid:hover{background:var(--p-bad)}
+.webbtn.on{border-color:color-mix(in srgb,var(--p-accent) 35%,transparent);background:color-mix(in srgb,var(--p-accent) 10%,transparent)}
+.field select{background:var(--p-bg)}
+@media (max-width:860px){
+.overlay{background:color-mix(in srgb,var(--p-scrim-c) 50%,transparent)}
+}
+.fsmenu{background:var(--p-surface);box-shadow:0 18px 50px color-mix(in srgb,var(--p-shadow-c) calc(50% * var(--p-shadow-k)),transparent)}
+.fsm-ck input{accent-color:var(--p-accent)}
+.fsmenu .danger{color:var(--p-bad)}
+.fsops .step.bad{color:var(--p-bad)}
+.fsop{background:color-mix(in srgb,var(--p-text) 2%,transparent)}
+.fsop.ask{border-color:color-mix(in srgb,var(--p-accent) 45%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--p-accent) 8%,transparent)}
+.fsop summary code{font:12.5px var(--p-font-mono)}
+.fsc{font:12px var(--p-font-mono)}
+.fsc .a{color:var(--p-ok)}
+.fsc .d{color:var(--p-bad)}
+.fsop.ok .fss{color:var(--p-ok)}
+.fsop.no .fss,.fsop.err .fss{color:var(--p-bad)}
+.fsdiff{font:12.5px/1.55 var(--p-font-mono);background:var(--p-bg)}
+.dl.add{background:color-mix(in srgb,var(--p-ok) 13%,transparent)}
+.dl.add i{color:var(--p-ok)}
+.dl.del{background:color-mix(in srgb,var(--p-bad) 13%,transparent)}
+.dl.del i{color:var(--p-bad)}
+.dl.gap{background:color-mix(in srgb,var(--p-text) 2.5%,transparent)}
+.fsnote.err{color:var(--p-bad)}
+.webbtn.dot::after{background:var(--p-ok)}
+.fsm-ck em{color:var(--p-bad)}
+.agop.agdanger.ask{border-color:color-mix(in srgb,var(--p-bad) 50%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--p-bad) 8%,transparent)}
+.agpre{font:12.5px/1.5 var(--p-font-mono);background:color-mix(in srgb,var(--p-scrim-c) 20%,transparent)}
+.agpre.err{color:var(--p-bad)}
+.agwarn{background:color-mix(in srgb,var(--p-bad) 8%,transparent);border:1px solid color-mix(in srgb,var(--p-bad) 30%,transparent);color:var(--p-bad)}
+.agtabs{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.agdl{color:var(--p-text)!important}
+.agcode{font:600 var(--p-font-mono);background:color-mix(in srgb,var(--p-accent) 12%,transparent)}
+.agcmd{background:color-mix(in srgb,var(--p-scrim-c) 30%,transparent)}
+.agcmd code{font:12.5px var(--p-font-mono)}
+.sugg button{background:color-mix(in srgb,var(--p-text) 2%,transparent)}
+.vopt:hover{background:color-mix(in srgb,var(--p-text) 3%,transparent)}
+.vopt.on{border-color:color-mix(in srgb,var(--p-accent) 55%,transparent);background:color-mix(in srgb,var(--p-accent) 7%,transparent)}
+.vav{background:var(--p-surface-2)}
+.vopt.on .vav{background:color-mix(in srgb,var(--p-accent) 18%,transparent)}
+.vrate{background:color-mix(in srgb,var(--p-text) 4%,transparent)}
+.pbody #pVersions .diff-code{background:var(--p-bg);font:12px/1.6 var(--p-font-mono)}
+.diff-add{background:color-mix(in srgb,var(--p-ok) 14%,var(--p-surface));color:var(--p-ok)}
+.diff-remove{background:color-mix(in srgb,var(--p-bad) 14%,var(--p-surface));color:var(--p-bad)}
